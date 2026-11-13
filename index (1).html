@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Estados Financieros</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#6a7585;--line:#e3e7ee;--g:#1a7f4b;--gb:#e6f4ec;--a:#a35f00;--ab:#fdf1dc;--r:#c0392b;--rb:#fbe7e4}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1300px;margin:0 auto;padding:16px 20px 24px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+h1{font-size:20px;margin:0}.sub{color:var(--mut);font-size:12px}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,button,input{font:inherit}
+select,button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer}
+button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.banner{display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px}
+.score{font-size:30px;font-weight:700;line-height:1}.score small{font-size:12px;font-weight:400;color:var(--mut)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:3px 10px;border-radius:999px;font-weight:600;font-size:12px}
+.pill.g{background:var(--gb);color:var(--g)}.pill.a{background:var(--ab);color:var(--a)}.pill.r{background:var(--rb);color:var(--r)}
+.alert{flex:1;min-width:240px;font-size:13px}.alert b{color:var(--r)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:10px 12px}
+.card.verde{border-left-color:var(--g)}.card.ambar{border-left-color:var(--a)}.card.rojo{border-left-color:var(--r)}
+.top{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.nm{font-weight:600;font-size:13px}.tag{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.bd{font-size:11px;font-weight:700;white-space:nowrap}
+.verde .bd{color:var(--g)}.ambar .bd{color:var(--a)}.rojo .bd{color:var(--r)}
+.val{font-size:24px;font-weight:700;margin:2px 0 4px}.val small{font-size:11px;font-weight:400;color:var(--mut);margin-left:4px}
+.cmp{font-size:12px;color:var(--mut);display:grid;gap:1px}.cmp b{color:var(--ink)}
+.fav{color:var(--g)!important}.des{color:var(--r)!important}
+.verde .dp{color:var(--g)}.ambar .dp{color:var(--a)}.rojo .dp{color:var(--r)}
+.xs{font-size:11px;color:var(--mut)}
+svg.sp{width:100%;height:38px;margin-top:6px;display:block}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.sec h2{font-size:15px;margin:0 0 8px}
+.dec{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dc{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.dc .n{font-weight:700}.dc .dv{font-size:12px;color:var(--mut);margin:2px 0 6px}.dc .ac{font-size:13px}.dc .ow{font-size:11px;color:var(--mut);margin-top:6px}
+.sig{margin:0;padding-left:16px;font-size:13px}.sig li{margin-bottom:6px}
+.note{color:var(--mut);font-size:11px;margin-top:8px}
+#base{display:none}
+.scroll{overflow:auto;max-height:520px;border:1px solid var(--line);margin-bottom:14px}
+table{border-collapse:collapse;font-size:12px}
+th,td{border:1px solid var(--line);padding:2px 4px;text-align:right;background:#fff}
+th{background:#f0f2f6;font-weight:600;position:sticky;top:0;z-index:2}
+td:first-child,th:first-child{text-align:left;white-space:nowrap;position:sticky;left:0;z-index:1;background:#f8f9fb;min-width:300px}
+th:first-child{z-index:3}
+tr.grp td{background:#eaeef5;font-weight:700}
+td input[type=number]{width:68px;border:0;text-align:right;padding:3px;background:transparent}
+td input[type=text]{width:100%;min-width:120px;border:0;padding:3px}
+td input:focus,.cfg input:focus{outline:2px solid #2b5fd9}
+.cfg input{width:64px;border:1px solid var(--line);border-radius:4px;padding:3px}
+h3{font-size:13px;margin:12px 0 6px}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.dec,.two{grid-template-columns:1fr}}
+@media print{@page{size:landscape;margin:8mm}body{background:#fff}.ctrl,#base{display:none!important}.wrap{padding:0}.grid{gap:6px}.val{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>Dashboard Estados Financieros</h1><div class="sub" id="emp"></div></div>
+  <div class="ctrl">
+    <label>Mes <select id="mes"></select></label>
+    <button id="bT" class="on">Tablero</button><button id="bB">Base editable</button>
+    <button onclick="window.print()">Imprimir</button>
+  </div>
+</header>
+
+<div id="tab">
+  <div class="banner" id="banner"></div>
+  <div class="grid" id="grid"></div>
+  <div class="two">
+    <div class="sec"><h2>Tres desviaciones que ameritan una decisión</h2><div class="dec" id="dec"></div>
+      <div class="note">Se priorizan las palancas (lo que la gerencia puede mover) por gravedad del semáforo; si hay menos de tres temas, la lista se completa con indicadores de resultado. Dos indicadores del mismo tema (por ejemplo ciclo de caja y flujo/EBITDA) cuentan como una sola decisión. Cada decisión necesita responsable y fecha de evaluación.</div></div>
+    <div class="sec"><h2>Señales a investigar</h2><ul class="sig" id="sig"></ul>
+      <div class="note">Son alertas para investigar, no pruebas de insolvencia ni de error.</div></div>
+  </div>
+  <div class="note" id="foot"></div>
+</div>
+
+<div id="base">
+  <div class="sec">
+    <h2>Base editable</h2>
+    <div class="ctrl" style="margin-bottom:8px">
+      <button id="bExp">Exportar JSON</button>
+      <label><button onclick="document.getElementById('imp').click()">Importar JSON</button><input id="imp" type="file" accept=".json" hidden></label>
+      <button id="bRst">Restablecer ejemplo</button>
+      <span class="sub">Cambios guardados en este navegador. Para publicar datos en GitHub, exporten el JSON.</span>
+    </div>
+    <div class="cfg sub">Tasa de impuestos <input type="number" id="c_tax" step="1"> % · WACC anual <input type="number" id="c_wacc" step="0.5"> % · Semáforo contra meta: verde ≤ <input type="number" id="c_t1" step="0.5"> % de desvío adverso, ámbar ≤ <input type="number" id="c_t2" step="0.5"> %, rojo por encima.</div>
+    <h3>1. Datos mensuales (36 meses; los ratios usan los últimos 12 meses)</h3>
+    <div class="scroll"><table id="tF"></table></div>
+    <h3>2. Presupuesto de los últimos 12 meses por indicador (en modo «meta» define el semáforo; en modo «umbral» es la comparación, y el semáforo usa los umbrales de la tabla 3)</h3>
+    <div class="scroll"><table id="tM"></table></div>
+    <h3>3. Definición del semáforo por indicador</h3>
+    <div class="scroll"><table id="tK"></table></div>
+    <div class="note">Modo «meta»: el semáforo mide el desvío contra el presupuesto del mes. Modo «umbral»: usa los valores de verde y ámbar de esta tabla (ahí están los de Altman para el indicador Z; los demás son referencias iniciales que cada empresa debe ajustar a su sector, covenants y política). Rojo = peor que el umbral ámbar.</div>
+  </div>
+</div>
+</div>
+
+<script>
+const DEFAULT={"empresa":"Empresa ejemplo (datos ilustrativos)","meses":["nov-23","dic-23","ene-24","feb-24","mar-24","abr-24","may-24","jun-24","jul-24","ago-24","sep-24","oct-24","nov-24","dic-24","ene-25","feb-25","mar-25","abr-25","may-25","jun-25","jul-25","ago-25","sep-25","oct-25","nov-25","dic-25","ene-26","feb-26","mar-26","abr-26","may-26","jun-26","jul-26","ago-26","sep-26","oct-26"],"filas":[{"id":"ventas","nombre":"Ventas / ingresos operativos","grupo":"Resultados (flujo mensual)"},{"id":"costo","nombre":"Costo de ventas","grupo":"Resultados (flujo mensual)"},{"id":"gop","nombre":"Gastos de administración y ventas","grupo":"Resultados (flujo mensual)"},{"id":"otros","nombre":"Otros ingresos/gastos operativos (neto, + ingreso)","grupo":"Resultados (flujo mensual)"},{"id":"da","nombre":"Depreciación y amortización (memo; ya incluida en costos y gastos)","grupo":"Resultados (flujo mensual)"},{"id":"intereses","nombre":"Intereses","grupo":"Resultados (flujo mensual)"},{"id":"otfin","nombre":"Otros gastos financieros netos (comisiones, cambio)","grupo":"Resultados (flujo mensual)"},{"id":"impuestos","nombre":"Impuesto de renta","grupo":"Resultados (flujo mensual)"},{"id":"flujo_op","nombre":"Flujo de caja operativo","grupo":"Resultados (flujo mensual)"},{"id":"capex","nombre":"CAPEX","grupo":"Resultados (flujo mensual)"},{"id":"efectivo","nombre":"Efectivo y equivalentes","grupo":"Balance (saldo a fin de mes)"},{"id":"cartera","nombre":"Cuentas por cobrar comerciales","grupo":"Balance (saldo a fin de mes)"},{"id":"inventarios","nombre":"Inventarios","grupo":"Balance (saldo a fin de mes)"},{"id":"anticipos","nombre":"Anticipos a proveedores","grupo":"Balance (saldo a fin de mes)"},{"id":"otac","nombre":"Otros activos corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"anc","nombre":"Activos no corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"prov","nombre":"Proveedores y CxP comerciales","grupo":"Balance (saldo a fin de mes)"},{"id":"deuda_cp","nombre":"Deuda financiera corriente","grupo":"Balance (saldo a fin de mes)"},{"id":"deuda_lp","nombre":"Deuda financiera no corriente","grupo":"Balance (saldo a fin de mes)"},{"id":"otpc","nombre":"Otros pasivos corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"otpnc","nombre":"Otros pasivos no corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"ret","nombre":"Utilidades retenidas","grupo":"Balance (saldo a fin de mes)"},{"id":"patrimonio","nombre":"Patrimonio total","grupo":"Balance (saldo a fin de mes)"}],"F":{"ventas":[1025,1050.6,1064.7,1065.2,1053.7,1035,1016,1003.6,1003.2,1017,1043.3,1077,1111.1,1138.2,1152.9,1152.8,1139.8,1119,1097.9,1083.9,1083,1097.3,1125.1,1161,1197.2,1225.9,1241.1,1240.5,1225.9,1203,1179.8,1164.3,1162.8,1177.7,1207.1,1245],"costo":[717.5,735.4,745.3,745.6,737.6,724.5,711.2,702.5,702.2,711.9,730.3,753.9,777.8,796.8,807,807,797.9,783.3,768.5,758.8,758.1,768.1,787.6,812.7,838,863.6,879.9,885.1,880.2,869.2,857.7,851.7,855.8,872.1,899.3,933.1],"gop":[205,205.6,206.2,206.8,207.5,208.1,208.7,209.3,209.9,210.5,211.2,211.8,212.4,213,213.6,214.2,214.8,215.5,216.1,216.7,217.3,217.9,218.5,219.1,219.8,220.4,221,221.6,222.2,222.8,223.5,224.1,224.7,225.3,225.9,226.5],"otros":[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],"da":[24,24.1,24.2,24.3,24.4,24.5,24.6,24.7,24.8,24.9,25,25.1,25.2,25.3,25.4,25.5,25.6,25.7,25.8,25.9,26,26.1,26.2,26.3,26.4,26.5,26.6,26.7,26.8,26.9,27,27.1,27.2,27.3,27.4,27.5],"intereses":[50.6,50.7,50.9,51,51.1,51.2,51.3,51.4,51.5,51.6,51.8,51.9,52,52.1,52.2,52.3,52.4,52.5,52.7,52.8,52.9,53,53.1,53.2,53.3,53.4,53.6,53.7,53.8,53.9,54.7,55.5,56.3,57,57.8,58.6],"otfin":[4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4.8,5.6,6.4,7.2,8,8.8,9.6,10.4],"impuestos":[17.5,19.9,21.1,20.9,19.5,17.2,15,13.4,13.1,14.3,16.8,20.1,23.4,26,27.3,27.1,25.4,23,20.5,18.8,18.5,19.7,22.4,25.9,29.4,30.3,29.6,27.3,23.4,18.7,13.8,9.8,7,5.8,5.8,6.4],"flujo_op":[56.4,-0.1,29.8,61.9,88,101.1,97.9,79.2,50.1,18.6,-6.5,-18.1,-12.7,8.9,41.2,75.9,104,118.1,114.4,94,62.5,28.5,1.4,-11.2,-5.3,7.2,38.1,71.9,-32.1,-16.2,-19.7,-44.8,-88.4,-141.4,-191.7,-226.3],"capex":[26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26],"efectivo":[740.4,724.3,738.1,784,856,941.2,1023.1,1086.2,1120.3,1122.9,1100.5,1066.4,1037.7,1030.6,1055.7,1115.6,1203.6,1305.7,1404.1,1482.1,1528.6,1541.1,1526.4,1499.2,1477.9,1469.1,1491.2,1547.1,1499,1526.8,1551.1,1550.3,1505.9,1408.5,1260.8,1078.5],"cartera":[1537.5,1575.9,1597.1,1597.8,1580.5,1552.5,1523.9,1505.4,1504.8,1525.5,1564.9,1615.5,1666.7,1707.4,1729.4,1729.3,1709.7,1678.5,1646.8,1625.9,1624.5,1646,1687.7,1741.5,1795.8,1838.8,1861.7,1860.7,1916.5,1956.9,1993.8,2041.4,2112.4,2214.1,2345.7,2498.3],"inventarios":[1817.7,1863.1,1888.1,1889,1868.6,1835.4,1801.6,1779.7,1779,1803.4,1850,1909.9,1970.4,2018.5,2044.5,2044.4,2021.2,1984.4,1946.9,1922.2,1920.5,1945.9,1995.3,2058.8,2123,2187.9,2229.2,2242.2,2282.6,2306.2,2327.2,2362,2424.8,2523.2,2655.8,2811.8],"anticipos":[60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60],"otac":[120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120],"anc":[3602,3603.9,3605.7,3607.4,3609,3610.5,3611.9,3613.2,3614.4,3615.5,3616.5,3617.4,3618.2,3618.9,3619.5,3620,3620.4,3620.7,3620.9,3621,3621,3620.9,3620.7,3620.4,3620,3619.5,3618.9,3618.2,3617.4,3616.5,3615.5,3614.4,3613.2,3611.9,3610.5,3609],"prov":[908.8,931.5,944,944.5,934.3,917.7,900.8,889.8,889.5,901.7,925,954.9,985.2,1009.2,1022.2,1022.2,1010.6,992.2,973.4,961.1,960.3,973,997.6,1029.4,1061.5,1093.9,1114.6,1121.1,1114.9,1100.9,1086.4,1078.8,1084,1104.6,1139.1,1182],"deuda_cp":[3608,3616,3624,3632,3640,3648,3656,3664,3672,3680,3688,3696,3704,3712,3720,3728,3736,3744,3752,3760,3768,3776,3784,3792,3800,3808,3816,3824,3832,3888,3944,4000,4056,4112,4168,4224],"deuda_lp":[902,904,906,908,910,912,914,916,918,920,922,924,926,928,930,932,934,936,938,940,942,944,946,948,950,952,954,956,958,972,986,1000,1014,1028,1042,1056],"otpc":[260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260],"otpnc":[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100],"ret":[1232.4,1269.4,1308.6,1347.4,1383.5,1415.5,1443.4,1468.3,1492.7,1519.3,1550.5,1587.9,1631.4,1679.8,1730.5,1780.8,1828,1870.7,1908.8,1943.7,1978,2014.6,2056.2,2104.2,2158.9,2215.1,2270.1,2320.8,2364.3,2399.1,2424.8,2442.9,2456,2466.7,2477.4,2489.3],"patrimonio":[2098.8,2135.7,2174.9,2213.7,2249.9,2281.9,2309.7,2334.6,2359,2385.6,2416.9,2454.2,2497.7,2546.1,2596.8,2647.1,2694.3,2737,2775.2,2810.1,2844.4,2880.9,2922.5,2970.6,3025.2,3081.4,3136.4,3187.2,3230.7,3265.4,3291.2,3309.3,3322.3,3333,3343.7,3355.6]},"metas":{"ebitda_m":[13,13,13,13,13,13,13,13,13,13,13,13],"roe":[14,14,14,14,14,14,14,14,14,14,14,14],"spread":[1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5],"rc":[1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25],"pa":[0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85],"ciclo":[82,82,82,82,82,82,82,82,82,82,82,82],"cobint":[3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2],"deuda_ebitda":[2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4],"conv":[55,55,55,55,55,55,55,55,55,55,55,55],"z":[3,3,3,3,3,3,3,3,3,3,3,3]},"cfg":{"tax":35,"wacc":12,"t1":3,"t2":10},"kpis":[{"id":"ebitda_m","tema":"margen","nombre":"Margen EBITDA","unidad":"%","dec":1,"mejor":"alto","modo":"meta","g":0,"a":0,"tipo":"palanca","accion":"Revisar precio, mezcla y costo por producto o servicio; fijar piso de margen y aprobación de descuentos. Separar si la caída es de precio, costo o gasto de expansión.","owner":"Dir. Comercial / CFO"},{"id":"roe","tema":"retorno","nombre":"ROE","unidad":"%","dec":1,"mejor":"alto","modo":"meta","g":0,"a":0,"tipo":"resultado","accion":"Descomponer con DuPont. Si el costo financiero absorbe el resultado operativo (ROE < ROI), renegociar plazo y tasa y no tomar deuda nueva hasta recuperar la caja; frenar inversión que no supere el WACC.","owner":"CFO"},{"id":"spread","tema":"retorno","nombre":"ROIC − WACC","unidad":"pp","dec":1,"mejor":"alto","modo":"abs","g":0,"a":-2,"tipo":"resultado","accion":"Si el retorno no cubre el costo de capital, frenar inversión sin retorno demostrado y liberar capital de trabajo.","owner":"CEO / CFO"},{"id":"rc","tema":"liquidez","nombre":"Razón corriente","unidad":"x","dec":2,"mejor":"alto","modo":"abs","g":1.2,"a":1,"tipo":"resultado","accion":"Contrastar con el calendario real de cobros y pagos; no basta el respaldo contable.","owner":"Tesorería"},{"id":"pa","tema":"liquidez","nombre":"Prueba ácida","unidad":"x","dec":2,"mejor":"alto","modo":"abs","g":0.8,"a":0.6,"tipo":"resultado","accion":"Excluye inventarios y anticipos: si cae, la liquidez depende de activos poco líquidos. Revisar líneas de crédito disponibles.","owner":"Tesorería"},{"id":"ciclo","tema":"caja","nombre":"Ciclo de caja","unidad":"días","dec":0,"mejor":"bajo","modo":"meta","g":0,"a":0,"tipo":"palanca","accion":"Atacar cartera (cobro escalonado, condicionar despachos a vencidos), inventario (congelar compras de baja rotación) y negociar plazo con proveedores.","owner":"CFO / Operaciones"},{"id":"cobint","tema":"deuda","nombre":"Cobertura de intereses","unidad":"x","dec":1,"mejor":"alto","modo":"abs","g":3,"a":1.5,"tipo":"resultado","accion":"Renegociar tasa y plazo, o reemplazar deuda corriente por largo plazo antes de que el costo financiero consuma el EBIT.","owner":"CFO"},{"id":"deuda_ebitda","tema":"deuda","nombre":"Deuda financiera / EBITDA","unidad":"x","dec":1,"mejor":"bajo","modo":"abs","g":2.5,"a":3.5,"tipo":"resultado","accion":"Verificar covenants y calendario de vencimientos; no tomar deuda nueva hasta recuperar EBITDA.","owner":"CFO"},{"id":"conv","tema":"caja","nombre":"Flujo operativo / EBITDA","unidad":"%","dec":0,"mejor":"alto","modo":"abs","g":50,"a":30,"tipo":"palanca","accion":"El EBITDA no se está volviendo caja: cobro escalonado y despachos condicionados a clientes vencidos, congelar compras de inventario de baja rotación y renegociar plazo con proveedores; meta de conversión por línea.","owner":"CFO"},{"id":"z","tema":"riesgo","nombre":"Indicador Z (Altman Z2)","unidad":"","dec":2,"mejor":"alto","modo":"abs","g":2.6,"a":1.11,"tipo":"resultado","accion":"Zona gris o de riesgo: plan de contingencia de liquidez y revisión del modelo de financiación con el comité.","owner":"CEO / CFO"}]};
+const KEY='dash-salud-fin-v2';
+const VIEW0=24;
+let S={data:JSON.parse(JSON.stringify(DEFAULT)),mes:11};
+try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o&&o.data&&o.data.kpis&&o.data.F)S=Object.assign(S,o)}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const nf=(v,d)=>Number(v).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const pctf=d=>(d>=0?'+':'−')+nf(Math.abs(d)*100,1)+' %';
+const ppf=d=>(d>=0?'+':'−')+nf(Math.abs(d),1)+' pp';
+
+/* ---------- cálculo de indicadores ---------- */
+function calc(t){
+  const D=S.data,F=D.F,tax=D.cfg.tax/100,wacc=D.cfg.wacc/100;
+  const L=k=>{let s=0;for(let j=t-11;j<=t;j++)s+=F[k][j];return s};
+  const B=k=>F[k][t];
+  const v=L('ventas'),c=L('costo'),g=L('gop'),o=L('otros'),da=L('da'),i=L('intereses'),of=L('otfin'),tx=L('impuestos'),fo=L('flujo_op');
+  const ebit=v-c-g+o, ebitda=ebit+da, un=ebit-i-of-tx;
+  const ac=B('efectivo')+B('cartera')+B('inventarios')+B('anticipos')+B('otac'), at=ac+B('anc');
+  const deuda=B('deuda_cp')+B('deuda_lp');
+  const pc=B('prov')+B('deuda_cp')+B('otpc'), pt=pc+B('deuda_lp')+B('otpnc'), pat=B('patrimonio');
+  const nopat=ebit*(1-tax), cio=pat+deuda-B('efectivo');
+  const roic=cio?nopat/cio*100:0, eva=nopat-wacc*cio;
+  const dias=(x,base)=>base?x/base*365:0;
+  const out={
+    ebitda_m:v?ebitda/v*100:0, roe:pat?un/pat*100:0, spread:roic-wacc*100,
+    rc:pc?ac/pc:0, pa:pc?(ac-B('inventarios')-B('anticipos'))/pc:0,
+    ciclo:dias(B('cartera'),v)+dias(B('inventarios'),c)-dias(B('prov'),c),
+    cobint:i?ebit/i:99, deuda_ebitda:ebitda>0?deuda/ebitda:99, conv:ebitda?fo/ebitda*100:0,
+    z:at&&pt?6.56*(ac-pc)/at+3.26*B('ret')/at+6.72*ebit/at+1.05*pat/pt:0
+  };
+  out._x={eva,roic,roi:at?ebit/at*100:0,un,ebitda,ebit,v,fo,cartera:B('cartera'),inv:B('inventarios'),pc,pt,at};
+  return out;
+}
+let VAL={};
+function recompute(){VAL={};for(let t=11;t<S.data.meses.length;t++)VAL[t]=calc(t);}
+
+function status(k,t){
+  const D=S.data,v=VAL[t][k.id],aa=VAL[t-12][k.id],j=t-VIEW0;
+  const meta=D.metas[k.id][j], pp=(k.unidad==='%'||k.unidad==='pp');
+  let st,adv,ref;
+  if(k.modo==='abs'){
+    ref=meta; const den=Math.abs(k.g)||1;
+    adv=k.mejor==='alto'?(k.g-v)/den:(v-k.g)/den;
+    st=k.mejor==='alto'?(v>=k.g?'verde':v>=k.a?'ambar':'rojo'):(v<=k.g?'verde':v<=k.a?'ambar':'rojo');
+  }else{
+    ref=meta; const d=(v-meta)/Math.abs(meta||1); adv=k.mejor==='bajo'?d:-d;
+    st=adv*100>D.cfg.t2?'rojo':adv*100>D.cfg.t1?'ambar':'verde';
+  }
+  const dif=(a,b)=>pp?{t:ppf(a-b),f:k.mejor==='alto'?a>=b:a<=b}:{t:pctf(b?(a-b)/Math.abs(b):0),f:k.mejor==='alto'?a>=b:a<=b};
+  return{v,aa,ref,st,adv,dm:dif(v,ref),dy:dif(v,aa)};
+}
+const LBL={verde:'● Cumple',ambar:'▲ Atención',rojo:'■ Crítico'};
+const COL={verde:'#1a7f4b',ambar:'#a35f00',rojo:'#c0392b'};
+const RK={verde:0,ambar:1,rojo:2};
+
+function spark(k,t,st){
+  const w=200,h=38,p=3,D=S.data,ser=[],mt=[];
+  for(let j=0;j<12;j++){ser.push(VAL[VIEW0+j][k.id]);mt.push(D.metas[k.id][j]);}
+  const a=ser.concat(mt),mn=Math.min(...a),mx=Math.max(...a),rg=(mx-mn)||1;
+  const X=j=>p+j*(w-2*p)/11,Y=v=>h-p-(v-mn)/rg*(h-2*p);
+  const pl=s=>s.map((v,j)=>(j?'L':'M')+X(j).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+  const i=t-VIEW0;
+  return `<svg class="sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Tendencia 12 meses de ${k.nombre}: línea sólida real, punteada meta o umbral">
+  <path d="${pl(mt)}" fill="none" stroke="#9aa5b5" stroke-width="1.5" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+  <path d="${pl(ser)}" fill="none" stroke="#1c2430" stroke-width="2" vector-effect="non-scaling-stroke"/>
+  <circle cx="${X(i)}" cy="${Y(ser[i])}" r="3.5" fill="${COL[st]}" stroke="#fff" stroke-width="1"/></svg>`;
+}
+
+function signals(t){
+  const a=VAL[t]._x,b=VAL[t-12]._x,o=[];
+  const gv=b.v?a.v/b.v-1:0, gc=b.cartera?a.cartera/b.cartera-1:0, gi=b.inv?a.inv/b.inv-1:0;
+  if(gc>gv+0.05)o.push(`<b>Cartera crece más que las ventas</b> (${pctf(gc)} vs ${pctf(gv)}): revisar antigüedad, concentración y política de crédito.`);
+  if(gi>gv+0.05)o.push(`<b>Inventarios crecen por encima de la actividad</b> (${pctf(gi)} vs ventas ${pctf(gv)}): revisar rotación y obsolescencia.`);
+  if(a.un>b.un&&a.fo<b.fo)o.push(`<b>La utilidad sube pero el flujo operativo cae:</b> la utilidad contable no se está convirtiendo en caja.`);
+  if(a.ebitda>b.ebitda&&VAL[t].ebitda_m<VAL[t-12].ebitda_m)o.push(`<b>EBITDA aumenta con menor margen</b> (${ppf(VAL[t].ebitda_m-VAL[t-12].ebitda_m)}): crecer no está conservando rentabilidad.`);
+  if(a.pt&&a.pc/a.pt>0.85)o.push(`<b>Vencimientos concentrados en el corto plazo</b> (${nf(a.pc/a.pt*100,0)} % del pasivo): confirmar la fuente de pago y el riesgo de refinanciación.`);
+  if(VAL[t].roe<a.roi)o.push(`<b>ROE (${nf(VAL[t].roe,1)} %) por debajo del rendimiento operativo de activos (${nf(a.roi,1)} %):</b> intereses, comisiones e impuestos están absorbiendo el resultado operativo.`);
+  if(a.eva<0&&a.un>0)o.push(`<b>Utilidad contable positiva pero EVA negativo</b> (${nf(a.eva,0)} MM): el negocio gana, pero no cubre su costo de capital.`);
+  return o;
+}
+
+function render(){
+  const D=S.data,t=VIEW0+S.mes;
+  $('emp').textContent=D.empresa+' · cierre de '+D.meses[t]+' · ratios sobre últimos 12 meses';
+  $('mes').innerHTML=Array.from({length:12},(_,j)=>`<option value="${j}"${j===S.mes?' selected':''}>${D.meses[VIEW0+j]}</option>`).join('');
+  const R=D.kpis.map(k=>({k,s:status(k,t)}));
+  const c={verde:0,ambar:0,rojo:0};R.forEach(x=>c[x.s.st]++);
+  const score=Math.round((c.verde+c.ambar*0.5)/R.length*100);
+  const reds=R.filter(x=>x.s.st==='rojo').map(x=>x.k.nombre);
+  $('banner').innerHTML=`<div class="score">${score}<small> / 100 índice de salud</small></div>
+   <div class="pills"><span class="pill g">● ${c.verde} cumplen</span><span class="pill a">▲ ${c.ambar} atención</span><span class="pill r">■ ${c.rojo} críticos</span></div>
+   <div class="alert">${reds.length?`<b>Alerta:</b> en rojo ${reds.join(', ')}.`:'Sin indicadores críticos este mes.'}</div>`;
+  const X=VAL[t]._x;
+  const subs={roe:`ROI (EBIT / activos): ${nf(X.roi,1)} %`,spread:`ROIC ${nf(X.roic,1)} % · EVA ${nf(X.eva,0)} MM`,ebitda_m:`EBITDA ${nf(X.ebitda,0)} MM (12 m)`,z:'≥ 2,60 sano · ≤ 1,11 riesgo'};
+  $('grid').innerHTML=R.map(({k,s})=>`<div class="card ${s.st}">
+   <div class="top"><div><div class="nm">${k.nombre}</div><div class="tag">${k.modo==='abs'?'semáforo por umbral':'semáforo vs presupuesto'} · ${k.mejor==='alto'?'más es mejor':'menos es mejor'}</div></div><div class="bd">${LBL[s.st]}</div></div>
+   <div class="val">${nf(s.v,k.dec)}<small>${k.unidad}</small></div>
+   <div class="cmp"><div>vs presupuesto <b class="dp">${s.dm.t}</b> <span>(${nf(s.ref,k.dec)})</span></div>
+   <div>vs año anterior <b class="${s.dy.f?'fav':'des'}">${s.dy.t}</b> <span>(${nf(s.aa,k.dec)})</span></div>
+   ${k.modo==='abs'?`<div class="xs">Semáforo: verde ${k.mejor==='alto'?'≥':'≤'} ${nf(k.g,k.dec)} · ámbar ${k.mejor==='alto'?'≥':'≤'} ${nf(k.a,k.dec)}</div>`:''}${subs[k.id]?`<div class="xs">${subs[k.id]}</div>`:''}</div>
+   ${spark(k,t,s.st)}</div>`).join('');
+  const nv=R.filter(x=>x.s.st!=='verde'),ord=(a,b)=>RK[b.s.st]-RK[a.s.st]||b.s.adv-a.s.adv;
+  const cand=nv.filter(x=>x.k.tipo==='palanca').sort(ord).concat(nv.filter(x=>x.k.tipo!=='palanca').sort(ord));
+  const used={},top=[];cand.forEach(x=>{const m=x.k.tema||x.k.id;if(top.length<3&&!used[m]){used[m]=1;top.push(x)}});
+  $('dec').innerHTML=top.length?top.map(({k,s},j)=>`<div class="dc"><div class="n">${j+1}. ${k.nombre} <span style="color:${COL[s.st]}">${LBL[s.st]}</span></div>
+   <div class="dv">${nf(s.v,k.dec)} ${k.unidad} · ${s.dm.t} vs presupuesto · ${s.dy.t} vs año anterior</div>
+   <div class="ac"><b>Decisión propuesta:</b> ${esc(k.accion)}</div><div class="ow">Responsable: ${esc(k.owner)}</div></div>`).join(''):'<div class="sub">Ningún indicador fuera de rango este mes.</div>';
+  const sg=signals(t);
+  $('sig').innerHTML=sg.length?sg.map(x=>`<li>${x}</li>`).join(''):'<li>Sin señales activas este mes.</li>';
+  $('foot').textContent=`Supuestos: impuesto ${D.cfg.tax} %, WACC ${D.cfg.wacc} %; ROIC = NOPAT / (patrimonio + deuda financiera − efectivo) a fin de mes; días de cartera e inventario con saldo final y ventas o costo de 12 meses. Z = Altman Z2 (6,56·X1 + 3,26·X2 + 6,72·X3 + 1,05·X4, con X4 = patrimonio contable / pasivo total).`;
+}
+
+/* ---------- base editable ---------- */
+function renderBase(){
+  const D=S.data;
+  $('c_tax').value=D.cfg.tax;$('c_wacc').value=D.cfg.wacc;$('c_t1').value=D.cfg.t1;$('c_t2').value=D.cfg.t2;
+  let h='<tr><th>Concepto (millones de pesos)</th>'+D.meses.map(m=>`<th>${m}</th>`).join('')+'</tr>',g='';
+  D.filas.forEach((f,r)=>{
+    if(f.grupo!==g){g=f.grupo;h+=`<tr class="grp"><td colspan="${D.meses.length+1}">${g}</td></tr>`}
+    h+=`<tr><td>${f.nombre}</td>${D.F[f.id].map((v,c)=>`<td><input type="number" step="any" value="${v}" data-s="F" data-k="${f.id}" data-c="${c}"></td>`).join('')}</tr>`;
+  });
+  h+=`<tr><td><i>Cuadre: activo − pasivo − patrimonio (debe ser 0)</i></td>${D.meses.map((_,c)=>{const F=D.F,x=k=>F[k][c];const a=x('efectivo')+x('cartera')+x('inventarios')+x('anticipos')+x('otac')+x('anc'),p=x('prov')+x('deuda_cp')+x('deuda_lp')+x('otpc')+x('otpnc');const d=a-p-x('patrimonio');return `<td style="color:${Math.abs(d)>1?'#c0392b':'#6a7585'}">${nf(d,1)}</td>`}).join('')}</tr>`;
+  $('tF').innerHTML=h;
+  $('tM').innerHTML='<tr><th>Indicador</th>'+Array.from({length:12},(_,j)=>`<th>${D.meses[VIEW0+j]}</th>`).join('')+'</tr>'+
+    D.kpis.map(k=>`<tr><td>${k.nombre} (${k.unidad||'índice'})</td>${D.metas[k.id].map((v,c)=>`<td><input type="number" step="any" value="${v}" data-s="M" data-k="${k.id}" data-c="${c}"></td>`).join('')}</tr>`).join('');
+  $('tK').innerHTML='<tr><th>Indicador</th><th>Modo</th><th>Mejor si es</th><th>Tipo</th><th>Verde</th><th>Ámbar</th><th>Decisión sugerida</th><th>Responsable</th></tr>'+
+    D.kpis.map((k,r)=>`<tr><td>${k.nombre}</td>
+    <td><select data-f="modo" data-r="${r}"><option value="meta"${k.modo==='meta'?' selected':''}>meta</option><option value="abs"${k.modo==='abs'?' selected':''}>umbral</option></select></td>
+    <td><select data-f="mejor" data-r="${r}"><option value="alto"${k.mejor==='alto'?' selected':''}>más alto</option><option value="bajo"${k.mejor==='bajo'?' selected':''}>más bajo</option></select></td>
+    <td><select data-f="tipo" data-r="${r}"><option value="palanca"${k.tipo==='palanca'?' selected':''}>palanca</option><option value="resultado"${k.tipo==='resultado'?' selected':''}>resultado</option></select></td>
+    <td><input type="number" step="any" value="${k.g}" data-f="g" data-r="${r}" data-n="1"></td><td><input type="number" step="any" value="${k.a}" data-f="a" data-r="${r}" data-n="1"></td>
+    <td style="min-width:420px"><input type="text" data-f="accion" data-r="${r}" value="${esc(k.accion)}"></td><td><input type="text" data-f="owner" data-r="${r}" value="${esc(k.owner)}"></td></tr>`).join('');
+}
+function changed(){save();recompute();render();}
+$('base').addEventListener('change',e=>{
+  const t=e.target,D=S.data;
+  if(t.dataset.s==='F'){const v=parseFloat(t.value);if(!isNaN(v))D.F[t.dataset.k][+t.dataset.c]=v;}
+  else if(t.dataset.s==='M'){const v=parseFloat(t.value);if(!isNaN(v))D.metas[t.dataset.k][+t.dataset.c]=v;}
+  else if(t.dataset.f){const k=D.kpis[+t.dataset.r];if(t.dataset.n){const v=parseFloat(t.value);if(!isNaN(v))k[t.dataset.f]=v;}else k[t.dataset.f]=t.value;}
+  else if(t.id&&t.id.startsWith('c_')){const v=parseFloat(t.value);if(!isNaN(v))D.cfg[t.id.slice(2)]=v;}
+  changed();
+  if(t.dataset.s==='F')renderBase();
+});
+$('mes').addEventListener('change',e=>{S.mes=+e.target.value;save();render()});
+function show(b){$('tab').style.display=b?'none':'block';$('base').style.display=b?'block':'none';$('bT').classList.toggle('on',!b);$('bB').classList.toggle('on',b);if(b)renderBase();}
+$('bT').onclick=()=>show(false);$('bB').onclick=()=>show(true);
+$('bExp').onclick=()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(S.data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='dashboard-datos.json';a.click();URL.revokeObjectURL(u)};
+$('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.kpis||!d.F||!d.meses||d.meses.length<36)throw 0;S.data=d;S.mes=Math.min(S.mes,11);changed();renderBase()}catch(x){alert('El archivo no tiene el formato esperado (36 meses de datos).')}})};
+let armed=false;
+$('bRst').onclick=function(){if(!armed){armed=true;this.textContent='¿Seguro? Clic otra vez';setTimeout(()=>{armed=false;this.textContent='Restablecer ejemplo'},3000);return}
+  S={data:JSON.parse(JSON.stringify(DEFAULT)),mes:11};armed=false;this.textContent='Restablecer ejemplo';changed();renderBase()};
+recompute();render();
+</script>
+</body>
+</html>
