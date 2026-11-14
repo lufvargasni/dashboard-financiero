@@ -10,6 +10,13 @@ Tablero de una página que calcula 10 indicadores financieros a partir de una ba
 3. Pestaña **Tablero**: elegir el mes y leer el semáforo, las tres decisiones y las señales a investigar.
 4. **Exportar JSON** guarda la base; **Importar JSON** la recupera.
 
+## Mensual o anual
+El selector **Mensual | Anual** del encabezado define la periodicidad de la base. Cada modo guarda su propia base:
+- **Mensual:** 36 meses; los flujos se suman en los últimos 12 meses y la comparación es contra el mismo mes del año anterior.
+- **Anual:** de 2 a 15 años (botones para agregar o quitar años); los flujos son el total del año, los saldos son al cierre y la comparación es contra el año anterior.
+
+La importación de documentos, el PDF y los textos se ajustan al modo elegido.
+
 ## Resumen imprimible en PDF
 Botón **Descargar PDF**: genera un resumen del mes elegido en A4 horizontal (2 páginas). La primera trae el índice de salud y la tabla de los 10 indicadores con semáforo, presupuesto, año anterior y tendencia de 12 meses; la segunda, las tres decisiones, las señales a investigar y los supuestos del cálculo.
 
