@@ -24,6 +24,8 @@ Antes de aplicar se muestra una revisión con lo extraído, los conceptos sin da
 Los datos se guardan solo en el navegador de quien edita. Los datos incluidos son ilustrativos.
 
 ## Indicadores
+Pasar el cursor por el nombre de un indicador (o tocar la «i» en pantallas táctiles) muestra qué mide, cómo se calcula y cómo leerlo.
+
 | Indicador | Fórmula (últimos 12 meses) |
 |---|---|
 | Margen EBITDA | (EBIT + D&A) / ingresos |

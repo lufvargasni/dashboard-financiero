@@ -164,6 +164,21 @@ td input:focus{outline:2px solid var(--focus);background:var(--surface)}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;box-shadow:0 6px 20px rgb(0 0 0 / .2);max-width:calc(100% - 32px)}
 .toast.err{background:var(--bad);color:#fff}
+.card{position:relative}
+.card:hover,.card:focus-within,.card.tip-open{z-index:6}
+.nm-row{display:flex;align-items:center;gap:6px}
+.info{flex:none;width:17px;height:17px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--mut);font:600 10.5px/1 var(--f-display);display:inline-grid;place-items:center;cursor:help;padding:0}
+.info:hover,.card.tip-open .info{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tip{position:absolute;left:10px;right:10px;top:46px;z-index:7;background:var(--ink);color:var(--bg);border-radius:var(--r-sm);padding:11px 13px;font-size:12px;line-height:1.45;box-shadow:0 10px 28px rgb(0 0 0 / .25);opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none}
+.tip::before{content:"";position:absolute;top:-5px;left:18px;width:10px;height:10px;background:inherit;transform:rotate(45deg)}
+.tip b{display:block;font:600 12.5px/1.3 var(--f-display);margin-bottom:4px}
+.tip dl{margin:0;display:grid;gap:5px}
+.tip dt{font-size:10px;text-transform:uppercase;letter-spacing:.07em;opacity:.7;font-weight:600}
+.tip dd{margin:0}
+.nm-row{cursor:help}
+.card-h:has(.nm-row:hover) .tip,.card-h:has(.info:focus-visible) .tip,.card.tip-open .tip{opacity:1;visibility:visible;transform:none}
+.card.tip-open .tip{pointer-events:auto}
+@media(prefers-reduced-motion:no-preference){.tip{transition:opacity .15s ease,transform .15s ease,visibility .15s}}
 @media(max-width:1180px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:980px){.two,.dec{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.summary{grid-template-columns:minmax(0,1fr)}}
@@ -337,6 +352,18 @@ function signals(t){
   return o;
 }
 
+const DEF={
+  ebitda_m:{q:'Qué parte de cada peso vendido queda como resultado de la operación, antes de depreciaciones, intereses e impuestos.',f:'(EBIT + depreciación y amortización) / ventas, últimos 12 meses.',l:'Más alto es mejor. Si cae, revisar precios, mezcla de productos y costos.'},
+  roe:{q:'La rentabilidad para los accionistas: cuánto ganan por cada peso de patrimonio.',f:'Utilidad neta de 12 meses / patrimonio a fin de mes.',l:'Incluye el efecto de la deuda. Debe superar lo que esperan ganar los accionistas (costo del patrimonio). Se analiza con DuPont: margen × rotación × apalancamiento.'},
+  spread:{q:'Si el negocio crea o destruye valor: compara lo que rinde el capital invertido con lo que cuesta.',f:'ROIC − WACC. ROIC = NOPAT / (patrimonio + deuda financiera − efectivo).',l:'Positivo = crea valor (EVA positivo). Negativo = la empresa gana contablemente pero no cubre el costo de su capital.'},
+  rc:{q:'La capacidad de pagar las deudas de corto plazo con los activos de corto plazo.',f:'Activo corriente / pasivo corriente.',l:'Por encima de 1 los activos corrientes cubren el pasivo corriente. Contrastar con el calendario real de cobros y pagos.'},
+  pa:{q:'La liquidez sin depender de vender inventario.',f:'(Activo corriente − inventarios − anticipos) / pasivo corriente.',l:'Más alto es mejor. Si cae mientras la razón corriente se mantiene, la liquidez depende de activos poco líquidos.'},
+  ciclo:{q:'Cuántos días tarda un peso invertido en la operación en volver como caja.',f:'Días de cartera + días de inventario − días de proveedores.',l:'Menos es mejor. Un ciclo que se alarga consume caja aunque haya utilidades.'},
+  cobint:{q:'Cuántas veces la utilidad operativa alcanza para pagar los intereses.',f:'EBIT de 12 meses / intereses de 12 meses.',l:'Más alto es mejor. Por debajo de 1,5 x el costo financiero se come casi todo el resultado operativo.'},
+  deuda_ebitda:{q:'Cuántos años de EBITDA harían falta para pagar la deuda financiera.',f:'Deuda financiera total / EBITDA de 12 meses.',l:'Menos es mejor. Los bancos suelen fijar un máximo en los contratos de crédito (covenants).'},
+  conv:{q:'Qué parte del EBITDA se convierte realmente en caja.',f:'Flujo de caja operativo de 12 meses / EBITDA de 12 meses.',l:'Más alto es mejor. Si es bajo o negativo, la utilidad se está quedando en cartera o inventario.'},
+  z:{q:'El riesgo de que la empresa entre en dificultades financieras graves (modelo de Altman Z2).',f:'6,56·X1 + 3,26·X2 + 6,72·X3 + 1,05·X4: capital de trabajo, utilidades retenidas y EBIT sobre activo total, y patrimonio sobre pasivo total.',l:'≥ 2,60 zona segura; 1,11 a 2,59 zona gris; ≤ 1,10 zona de riesgo. Es una alerta temprana, no un dictamen.'}};
+const tipHTML=k=>{const d=DEF[k.id];if(!d)return'';return `<div class="tip" role="tooltip" id="tip-${k.id}"><b>${esc(k.nombre)}</b><dl><dt>Qué mide</dt><dd>${d.q}</dd><dt>Cómo se calcula</dt><dd>${d.f}</dd><dt>Cómo leerlo</dt><dd>${d.l}</dd></dl></div>`};
 function render(){
   const D=S.data,t=VIEW0+S.mes;
   $('emp').textContent=D.empresa+' · cierre de '+D.meses[t]+' · ratios sobre últimos 12 meses · cifras en millones de pesos';
@@ -364,7 +391,7 @@ function render(){
   const X=VAL[t]._x;
   const subs={roe:`ROI (EBIT / activos): ${nf(X.roi,1)} %`,spread:`ROIC ${nf(X.roic,1)} % · EVA ${nf(X.eva,0)} MM`,ebitda_m:`EBITDA ${nf(X.ebitda,0)} MM (12 m)`,z:'≥ 2,60 sano · ≤ 1,11 riesgo'};
   $('grid').innerHTML=R.map(({k,s})=>`<article class="card ${s.st}">
-   <div class="card-h"><div><div class="nm">${k.nombre}</div><div class="tag">${k.modo==='abs'?'Por umbral':'Vs presupuesto'} · ${k.mejor==='alto'?'más es mejor':'menos es mejor'}</div></div>${chip(s.st)}</div>
+   <div class="card-h"><div><div class="nm-row"><div class="nm">${k.nombre}</div>${DEF[k.id]?`<button type="button" class="info" data-tip="${k.id}" aria-label="Qué significa ${esc(k.nombre)}" aria-describedby="tip-${k.id}">i</button>`:''}</div><div class="tag">${k.modo==='abs'?'Por umbral':'Vs presupuesto'} · ${k.mejor==='alto'?'más es mejor':'menos es mejor'}</div></div>${chip(s.st)}${tipHTML(k)}</div>
    <div class="val num">${nf(s.v,k.dec)}<small>${k.unidad}</small></div>
    <div class="cmp num">
      <div class="row"><span>vs presupuesto <span class="xs">(${nf(s.ref,k.dec)})</span></span><b class="dp">${s.dm.t}</b></div>
@@ -416,6 +443,11 @@ $('base').addEventListener('change',e=>{
   if(t.dataset.s==='F')renderBase();
 });
 $('mes').addEventListener('change',e=>{S.mes=+e.target.value;save();render()});
+/* Ayuda de cada indicador: se ve al pasar el cursor; en pantallas táctiles, al tocar la «i» */
+const closeTips=()=>document.querySelectorAll('.card.tip-open').forEach(c=>c.classList.remove('tip-open'));
+$('grid').addEventListener('click',e=>{const b=e.target.closest('.info');if(!b)return;const c=b.closest('.card'),open=c.classList.contains('tip-open');closeTips();if(!open)c.classList.add('tip-open')});
+document.addEventListener('click',e=>{if(!e.target.closest('.info'))closeTips()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTips()});
 function show(b){$('tab').hidden=b;$('base').hidden=!b;$('bT').classList.toggle('on',!b);$('bB').classList.toggle('on',b);$('bT').setAttribute('aria-selected',!b);$('bB').setAttribute('aria-selected',b);if(b)renderBase();}
 $('bT').onclick=()=>show(false);$('bB').onclick=()=>show(true);
 /* Exportar: en claude.ai usa la capacidad de descargas; fuera de claude.ai, un enlace normal */
