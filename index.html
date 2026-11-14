@@ -477,7 +477,7 @@ function renderBase(){
   $('yrTools').hidden=!isA();$('bDelY').disabled=D.meses.length<=2;$('bAddY').disabled=D.meses.length>=15;
   $('tM').innerHTML='<tr><th>Indicador</th>'+Array.from({length:NV()},(_,j)=>`<th>${D.meses[V0()+j]}</th>`).join('')+'</tr>'+
     D.kpis.map(k=>`<tr><td>${k.nombre} (${k.unidad||'índice'})</td>${D.metas[k.id].map((v,c)=>`<td><input type="number" step="any" value="${v}" data-s="M" data-k="${k.id}" data-c="${c}"></td>`).join('')}</tr>`).join('');
-  $('tK').innerHTML='<tr><th>Indicador</th><th>Meta (todos los periodos)</th><th>Semáforo por</th><th>Mejor si es</th><th>Verde desde</th><th>Ámbar desde</th><th>Tipo</th><th>Decisión sugerida</th><th>Responsable</th></tr>'+
+  $('tK').innerHTML='<tr><th>Indicador</th><th>Meta (todos los periodos)</th><th>Semáforo por</th><th>Mejor si es</th><th>Verde desde</th><th>Ámbar desde</th><th>Decisión sugerida</th><th>Responsable</th></tr>'+
     D.kpis.map((k,r)=>{const ms=D.metas[k.id],same=ms.every(v=>v===ms[0]),u=k.unidad?` <span class="u">${k.unidad}</span>`:'',off=k.modo==='meta';
     const thr=f=>`<td class="kt"><input type="number" step="any" value="${k[f]}" data-f="${f}" data-r="${r}" data-n="1" aria-label="${f==='g'?'Verde':'Ámbar'} desde, ${esc(k.nombre)}"${off?' disabled title="Con semáforo por meta, el color sale del desvío contra la meta"':''}>${u}</td>`;
     return `<tr><td>${k.nombre}</td>
@@ -485,7 +485,6 @@ function renderBase(){
     <td><select data-f="modo" data-r="${r}"><option value="meta"${k.modo==='meta'?' selected':''}>meta</option><option value="abs"${k.modo==='abs'?' selected':''}>umbral</option></select></td>
     <td><select data-f="mejor" data-r="${r}"><option value="alto"${k.mejor==='alto'?' selected':''}>más alto</option><option value="bajo"${k.mejor==='bajo'?' selected':''}>más bajo</option></select></td>
     ${thr('g')}${thr('a')}
-    <td><select data-f="tipo" data-r="${r}"><option value="palanca"${k.tipo==='palanca'?' selected':''}>palanca</option><option value="resultado"${k.tipo==='resultado'?' selected':''}>resultado</option></select></td>
     <td style="min-width:420px"><input type="text" data-f="accion" data-r="${r}" value="${esc(k.accion)}"></td><td><input type="text" data-f="owner" data-r="${r}" value="${esc(k.owner)}"></td></tr>`}).join('');
 }
 function changed(){save();recompute();render();}
