@@ -2,96 +2,207 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard mensual de salud financiera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard Estados Financieros - Cierre mensual</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#6a7585;--line:#e3e7ee;--g:#1a7f4b;--gb:#e6f4ec;--a:#a35f00;--ab:#fdf1dc;--r:#c0392b;--rb:#fbe7e4}
+/* Layout: banda de encabezado fija → resumen (índice + alertas) → rejilla de 10 indicadores → decisiones y señales en dos columnas */
+:root{
+  --bg:#f2f5f9;--surface:#ffffff;--surface-2:#eef2f7;--ink:#14202e;--mut:#5d6b7d;--line:#dde3eb;
+  --accent:#1f4e79;--accent-ink:#ffffff;--accent-soft:#e3ecf6;
+  --ok:#17804a;--ok-bg:#e3f3ea;--warn:#9a5c06;--warn-bg:#fbefd9;--bad:#b8362a;--bad-bg:#f9e4e1;
+  --spark-meta:#9aa7b8;--focus:#2b6cd9;
+  --f-display:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:12px;--r-sm:8px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d131a;--surface:#141c26;--surface-2:#1b2531;--ink:#e6ebf1;--mut:#97a5b6;--line:#283442;
+  --accent:#8bb7e4;--accent-ink:#0d131a;--accent-soft:#1c2c3e;
+  --ok:#4fc787;--ok-bg:#14301f;--warn:#e6a94e;--warn-bg:#33270f;--bad:#f27d6f;--bad-bg:#3a1b17;
+  --spark-meta:#5d6b7d;--focus:#7fb0ff;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131a;--surface:#141c26;--surface-2:#1b2531;--ink:#e6ebf1;--mut:#97a5b6;--line:#283442;
+  --accent:#8bb7e4;--accent-ink:#0d131a;--accent-soft:#1c2c3e;
+  --ok:#4fc787;--ok-bg:#14301f;--warn:#e6a94e;--warn-bg:#33270f;--bad:#f27d6f;--bad-bg:#3a1b17;
+  --spark-meta:#5d6b7d;--focus:#7fb0ff;color-scheme:dark}
+
 *{box-sizing:border-box}
-body{margin:0;font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:1300px;margin:0 auto;padding:16px 20px 24px}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
-h1{font-size:20px;margin:0}.sub{color:var(--mut);font-size:12px}
-.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-select,button,input{font:inherit}
-select,button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer}
-button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.banner{display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px}
-.score{font-size:30px;font-weight:700;line-height:1}.score small{font-size:12px;font-weight:400;color:var(--mut)}
+body{margin:0;font:14px/1.5 var(--f-body);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.num{font-variant-numeric:tabular-nums}
+select,button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Encabezado */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in,.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-in{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-block:14px}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}
+.mark{flex:none;width:36px;height:36px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.mark svg{width:20px;height:20px}
+h1{font:600 18px/1.2 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--mut);font-size:12.5px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.field{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:500}
+.field select{border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-sm);padding:7px 30px 7px 12px;cursor:pointer;font-weight:600;font-size:13px;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px}
+.seg button{border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--mut);cursor:pointer}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .12)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--mut)}
+
+.wrap{padding-block:20px 32px;display:grid;gap:20px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 10px}
+h2{font:600 15px/1.3 var(--f-display);margin:0;letter-spacing:-.005em}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600}
+
+/* Resumen */
+.summary{display:grid;grid-template-columns:auto 1fr;gap:20px 28px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 22px}
+.gauge{display:flex;align-items:center;gap:16px}
+.ring{width:92px;height:92px;flex:none}
+.ring text{font:700 24px var(--f-display);fill:var(--ink)}
+.gauge .lbl{font:600 15px/1.25 var(--f-display)}
+.gauge .lbl small{display:block;font:400 12px var(--f-body);color:var(--mut);margin-top:2px}
+.sum-r{display:grid;gap:10px;min-width:0}
 .pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{padding:3px 10px;border-radius:999px;font-weight:600;font-size:12px}
-.pill.g{background:var(--gb);color:var(--g)}.pill.a{background:var(--ab);color:var(--a)}.pill.r{background:var(--rb);color:var(--r)}
-.alert{flex:1;min-width:240px;font-size:13px}.alert b{color:var(--r)}
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
-.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:10px 12px}
-.card.verde{border-left-color:var(--g)}.card.ambar{border-left-color:var(--a)}.card.rojo{border-left-color:var(--r)}
-.top{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
-.nm{font-weight:600;font-size:13px}.tag{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
-.bd{font-size:11px;font-weight:700;white-space:nowrap}
-.verde .bd{color:var(--g)}.ambar .bd{color:var(--a)}.rojo .bd{color:var(--r)}
-.val{font-size:24px;font-weight:700;margin:2px 0 4px}.val small{font-size:11px;font-weight:400;color:var(--mut);margin-left:4px}
-.cmp{font-size:12px;color:var(--mut);display:grid;gap:1px}.cmp b{color:var(--ink)}
-.fav{color:var(--g)!important}.des{color:var(--r)!important}
-.verde .dp{color:var(--g)}.ambar .dp{color:var(--a)}.rojo .dp{color:var(--r)}
-.xs{font-size:11px;color:var(--mut)}
-svg.sp{width:100%;height:38px;margin-top:6px;display:block}
-.two{display:grid;grid-template-columns:2fr 1fr;gap:12px}
-.sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
-.sec h2{font-size:15px;margin:0 0 8px}
-.dec{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.dc{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
-.dc .n{font-weight:700}.dc .dv{font-size:12px;color:var(--mut);margin:2px 0 6px}.dc .ac{font-size:13px}.dc .ow{font-size:11px;color:var(--mut);margin-top:6px}
-.sig{margin:0;padding-left:16px;font-size:13px}.sig li{margin-bottom:6px}
-.note{color:var(--mut);font-size:11px;margin-top:8px}
-#base{display:none}
-.scroll{overflow:auto;max-height:520px;border:1px solid var(--line);margin-bottom:14px}
-table{border-collapse:collapse;font-size:12px}
-th,td{border:1px solid var(--line);padding:2px 4px;text-align:right;background:#fff}
-th{background:#f0f2f6;font-weight:600;position:sticky;top:0;z-index:2}
-td:first-child,th:first-child{text-align:left;white-space:nowrap;position:sticky;left:0;z-index:1;background:#f8f9fb;min-width:300px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-weight:600;font-size:12px;white-space:nowrap}
+.chip i{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.chip.verde{background:var(--ok-bg);color:var(--ok)}
+.chip.ambar{background:var(--warn-bg);color:var(--warn)}
+.chip.ambar i{border-radius:1px;transform:rotate(45deg)}
+.chip.rojo{background:var(--bad-bg);color:var(--bad)}
+.chip.rojo i{border-radius:1px}
+.alert{font-size:13.5px;color:var(--ink)}
+.alert b{color:var(--bad)}
+
+/* Indicadores */
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.rojo{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+.card-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.nm{font-weight:600;font-size:13px;line-height:1.3}
+.tag{font-size:10.5px;color:var(--mut);margin-top:2px}
+.val{font:600 28px/1 var(--f-display);letter-spacing:-.02em}
+.val small{font:500 12px var(--f-body);color:var(--mut);margin-left:4px;letter-spacing:0}
+.cmp{display:grid;gap:3px;font-size:12px;color:var(--mut)}
+.cmp .row{display:flex;justify-content:space-between;gap:8px}
+.cmp b{font-weight:600}
+.verde .dp{color:var(--ok)}.ambar .dp{color:var(--warn)}.rojo .dp{color:var(--bad)}
+.fav{color:var(--ok)}.des{color:var(--bad)}
+.xs{font-size:11px;color:var(--mut);line-height:1.4}
+.sp-wrap{margin-top:auto;padding-top:4px;border-top:1px dashed var(--line)}
+svg.sp{width:100%;height:42px;display:block;margin-top:6px;overflow:visible}
+.legend{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--mut)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:20px;height:6px}
+
+/* Decisiones y señales */
+.two{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0}
+.dec{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dc{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--surface-2)}
+.dc .n{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-weight:600}
+.dc .n .k{font:600 12px var(--f-display);color:var(--mut);margin-right:6px}
+.dc .dv{font-size:12px;color:var(--mut)}
+.dc .ac{font-size:13px}
+.dc .ow{margin-top:auto;font-size:11.5px;color:var(--mut);padding-top:6px;border-top:1px solid var(--line)}
+.sig{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:13px}
+.sig li{padding:8px 10px 8px 12px;border-radius:var(--r-sm);background:var(--surface-2);border-left:3px solid var(--warn)}
+.sig li.none{border-left-color:var(--ok)}
+.note{color:var(--mut);font-size:11.5px;margin-top:10px;line-height:1.5;max-width:90ch}
+.foot{color:var(--mut);font-size:11.5px;line-height:1.5}
+
+/* Base editable */
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.msg{font-size:12.5px;color:var(--bad);font-weight:600}
+.cfg{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:12.5px;color:var(--mut);padding:10px 12px;background:var(--surface-2);border-radius:var(--r-sm);margin-bottom:6px}
+.cfg label{display:inline-flex;gap:6px;align-items:center}
+.cfg input{width:64px;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--surface);text-align:right}
+h3{font:600 13px var(--f-display);margin:18px 0 8px}
+.scroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:var(--r-sm)}
+table{border-collapse:separate;border-spacing:0;font-size:12px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:2px 4px;text-align:right;background:var(--surface)}
+th{background:var(--surface-2);font-weight:600;position:sticky;top:0;z-index:2;padding:6px 6px;color:var(--mut);font-size:11.5px}
+td:first-child,th:first-child{text-align:left;white-space:nowrap;position:sticky;left:0;z-index:1;background:var(--surface-2);min-width:280px;padding-left:10px}
 th:first-child{z-index:3}
-tr.grp td{background:#eaeef5;font-weight:700}
-td input[type=number]{width:68px;border:0;text-align:right;padding:3px;background:transparent}
-td input[type=text]{width:100%;min-width:120px;border:0;padding:3px}
-td input:focus,.cfg input:focus{outline:2px solid #2b5fd9}
-.cfg input{width:64px;border:1px solid var(--line);border-radius:4px;padding:3px}
-h3{font-size:13px;margin:12px 0 6px}
-@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.dec,.two{grid-template-columns:1fr}}
-@media print{@page{size:landscape;margin:8mm}body{background:#fff}.ctrl,#base{display:none!important}.wrap{padding:0}.grid{gap:6px}.val{font-size:20px}}
+tr.grp td{background:var(--accent-soft);font-weight:700;color:var(--accent);position:static}
+td input[type=number]{width:68px;border:0;text-align:right;padding:4px;background:transparent;border-radius:4px}
+td input[type=text]{width:100%;min-width:120px;border:0;padding:4px;background:transparent}
+td select{border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:2px 4px}
+td input:hover{background:var(--surface-2)}
+td input:focus{outline:2px solid var(--focus);background:var(--surface)}
+
+@media(max-width:1180px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:980px){.two,.dec{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.summary{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:480px){.grid{grid-template-columns:minmax(0,1fr)}.top-in{padding-block:10px}h1{font-size:16px}td:first-child,th:first-child{min-width:180px;white-space:normal}}
+@media(prefers-reduced-motion:no-preference){.ring .arc{transition:stroke-dashoffset .5s ease}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div><h1>Salud financiera · cierre mensual</h1><div class="sub" id="emp"></div></div>
-  <div class="ctrl">
-    <label>Mes <select id="mes"></select></label>
-    <button id="bT" class="on">Tablero</button><button id="bB">Base editable</button>
-    <button onclick="window.print()">Imprimir</button>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 16.5h14"/><path d="M5.5 13V9"/><path d="M10 13V5"/><path d="M14.5 13v-2.5"/></svg></div>
+      <div style="min-width:0"><h1>Dashboard Estados Financieros - Cierre mensual</h1><div class="sub" id="emp"></div></div>
+    </div>
+    <div class="ctrl">
+      <label class="field" for="mes">Mes de cierre <select id="mes"></select></label>
+      <div class="seg" role="tablist" aria-label="Vista">
+        <button id="bT" class="on" role="tab">Tablero</button><button id="bB" role="tab">Base editable</button>
+      </div>
+    </div>
   </div>
 </header>
 
-<div id="tab">
-  <div class="banner" id="banner"></div>
-  <div class="grid" id="grid"></div>
-  <div class="two">
-    <div class="sec"><h2>Tres desviaciones que ameritan una decisión</h2><div class="dec" id="dec"></div>
+<main>
+<div class="wrap" id="tab">
+  <section class="summary" id="banner" aria-label="Resumen del mes"></section>
+
+  <section>
+    <div class="sec-h">
+      <h2>Indicadores clave <span class="sub">· últimos 12 meses</span></h2>
+      <div class="legend" aria-hidden="true">
+        <span><svg viewBox="0 0 20 6"><path d="M0 3h20" style="stroke:var(--ink)" stroke-width="2"/></svg>Real</span>
+        <span><svg viewBox="0 0 20 6"><path d="M0 3h20" style="stroke:var(--spark-meta)" stroke-width="1.6" stroke-dasharray="3 3"/></svg>Meta o umbral</span>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="two">
+    <div class="panel"><div class="sec-h"><h2>Tres desviaciones que ameritan una decisión</h2></div><div class="dec" id="dec"></div>
       <div class="note">Se priorizan las palancas (lo que la gerencia puede mover) por gravedad del semáforo; si hay menos de tres temas, la lista se completa con indicadores de resultado. Dos indicadores del mismo tema (por ejemplo ciclo de caja y flujo/EBITDA) cuentan como una sola decisión. Cada decisión necesita responsable y fecha de evaluación.</div></div>
-    <div class="sec"><h2>Señales a investigar</h2><ul class="sig" id="sig"></ul>
+    <div class="panel"><div class="sec-h"><h2>Señales a investigar</h2></div><ul class="sig" id="sig"></ul>
       <div class="note">Son alertas para investigar, no pruebas de insolvencia ni de error.</div></div>
-  </div>
-  <div class="note" id="foot"></div>
+  </section>
+  <div class="foot" id="foot"></div>
 </div>
 
-<div id="base">
-  <div class="sec">
-    <h2>Base editable</h2>
-    <div class="ctrl" style="margin-bottom:8px">
-      <button id="bExp">Exportar JSON</button>
-      <label><button onclick="document.getElementById('imp').click()">Importar JSON</button><input id="imp" type="file" accept=".json" hidden></label>
-      <button id="bRst">Restablecer ejemplo</button>
-      <span class="sub">Cambios guardados en este navegador. Para publicar datos en GitHub, exporten el JSON.</span>
+<div class="wrap" id="base" hidden>
+  <div class="panel">
+    <div class="sec-h"><h2>Base editable</h2><span class="sub">Cambios guardados en este navegador. Para compartir los datos, exporten el JSON.</span></div>
+    <div class="tools">
+      <button class="btn" id="bExp">Exportar JSON</button>
+      <button class="btn" id="bImp">Importar JSON</button><input id="imp" type="file" accept=".json" hidden>
+      <button class="btn" id="bRst">Restablecer ejemplo</button>
+      <span class="msg" id="impMsg" role="status"></span>
     </div>
-    <div class="cfg sub">Tasa de impuestos <input type="number" id="c_tax" step="1"> % · WACC anual <input type="number" id="c_wacc" step="0.5"> % · Semáforo contra meta: verde ≤ <input type="number" id="c_t1" step="0.5"> % de desvío adverso, ámbar ≤ <input type="number" id="c_t2" step="0.5"> %, rojo por encima.</div>
+    <div class="cfg">
+      <label for="c_tax">Tasa de impuestos <input type="number" id="c_tax" step="1"> %</label>
+      <label for="c_wacc">WACC anual <input type="number" id="c_wacc" step="0.5"> %</label>
+      <span>Semáforo contra meta:</span>
+      <label for="c_t1">verde ≤ <input type="number" id="c_t1" step="0.5"> % de desvío adverso</label>
+      <label for="c_t2">ámbar ≤ <input type="number" id="c_t2" step="0.5"> %, rojo por encima</label>
+    </div>
     <h3>1. Datos mensuales (36 meses; los ratios usan los últimos 12 meses)</h3>
     <div class="scroll"><table id="tF"></table></div>
     <h3>2. Presupuesto de los últimos 12 meses por indicador (en modo «meta» define el semáforo; en modo «umbral» es la comparación, y el semáforo usa los umbrales de la tabla 3)</h3>
@@ -101,7 +212,7 @@ h3{font-size:13px;margin:12px 0 6px}
     <div class="note">Modo «meta»: el semáforo mide el desvío contra el presupuesto del mes. Modo «umbral»: usa los valores de verde y ámbar de esta tabla (ahí están los de Altman para el indicador Z; los demás son referencias iniciales que cada empresa debe ajustar a su sector, covenants y política). Rojo = peor que el umbral ámbar.</div>
   </div>
 </div>
-</div>
+</main>
 
 <script>
 const DEFAULT={"empresa":"Empresa ejemplo (datos ilustrativos)","meses":["nov-23","dic-23","ene-24","feb-24","mar-24","abr-24","may-24","jun-24","jul-24","ago-24","sep-24","oct-24","nov-24","dic-24","ene-25","feb-25","mar-25","abr-25","may-25","jun-25","jul-25","ago-25","sep-25","oct-25","nov-25","dic-25","ene-26","feb-26","mar-26","abr-26","may-26","jun-26","jul-26","ago-26","sep-26","oct-26"],"filas":[{"id":"ventas","nombre":"Ventas / ingresos operativos","grupo":"Resultados (flujo mensual)"},{"id":"costo","nombre":"Costo de ventas","grupo":"Resultados (flujo mensual)"},{"id":"gop","nombre":"Gastos de administración y ventas","grupo":"Resultados (flujo mensual)"},{"id":"otros","nombre":"Otros ingresos/gastos operativos (neto, + ingreso)","grupo":"Resultados (flujo mensual)"},{"id":"da","nombre":"Depreciación y amortización (memo; ya incluida en costos y gastos)","grupo":"Resultados (flujo mensual)"},{"id":"intereses","nombre":"Intereses","grupo":"Resultados (flujo mensual)"},{"id":"otfin","nombre":"Otros gastos financieros netos (comisiones, cambio)","grupo":"Resultados (flujo mensual)"},{"id":"impuestos","nombre":"Impuesto de renta","grupo":"Resultados (flujo mensual)"},{"id":"flujo_op","nombre":"Flujo de caja operativo","grupo":"Resultados (flujo mensual)"},{"id":"capex","nombre":"CAPEX","grupo":"Resultados (flujo mensual)"},{"id":"efectivo","nombre":"Efectivo y equivalentes","grupo":"Balance (saldo a fin de mes)"},{"id":"cartera","nombre":"Cuentas por cobrar comerciales","grupo":"Balance (saldo a fin de mes)"},{"id":"inventarios","nombre":"Inventarios","grupo":"Balance (saldo a fin de mes)"},{"id":"anticipos","nombre":"Anticipos a proveedores","grupo":"Balance (saldo a fin de mes)"},{"id":"otac","nombre":"Otros activos corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"anc","nombre":"Activos no corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"prov","nombre":"Proveedores y CxP comerciales","grupo":"Balance (saldo a fin de mes)"},{"id":"deuda_cp","nombre":"Deuda financiera corriente","grupo":"Balance (saldo a fin de mes)"},{"id":"deuda_lp","nombre":"Deuda financiera no corriente","grupo":"Balance (saldo a fin de mes)"},{"id":"otpc","nombre":"Otros pasivos corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"otpnc","nombre":"Otros pasivos no corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"ret","nombre":"Utilidades retenidas","grupo":"Balance (saldo a fin de mes)"},{"id":"patrimonio","nombre":"Patrimonio total","grupo":"Balance (saldo a fin de mes)"}],"F":{"ventas":[1025,1050.6,1064.7,1065.2,1053.7,1035,1016,1003.6,1003.2,1017,1043.3,1077,1111.1,1138.2,1152.9,1152.8,1139.8,1119,1097.9,1083.9,1083,1097.3,1125.1,1161,1197.2,1225.9,1241.1,1240.5,1225.9,1203,1179.8,1164.3,1162.8,1177.7,1207.1,1245],"costo":[717.5,735.4,745.3,745.6,737.6,724.5,711.2,702.5,702.2,711.9,730.3,753.9,777.8,796.8,807,807,797.9,783.3,768.5,758.8,758.1,768.1,787.6,812.7,838,863.6,879.9,885.1,880.2,869.2,857.7,851.7,855.8,872.1,899.3,933.1],"gop":[205,205.6,206.2,206.8,207.5,208.1,208.7,209.3,209.9,210.5,211.2,211.8,212.4,213,213.6,214.2,214.8,215.5,216.1,216.7,217.3,217.9,218.5,219.1,219.8,220.4,221,221.6,222.2,222.8,223.5,224.1,224.7,225.3,225.9,226.5],"otros":[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],"da":[24,24.1,24.2,24.3,24.4,24.5,24.6,24.7,24.8,24.9,25,25.1,25.2,25.3,25.4,25.5,25.6,25.7,25.8,25.9,26,26.1,26.2,26.3,26.4,26.5,26.6,26.7,26.8,26.9,27,27.1,27.2,27.3,27.4,27.5],"intereses":[50.6,50.7,50.9,51,51.1,51.2,51.3,51.4,51.5,51.6,51.8,51.9,52,52.1,52.2,52.3,52.4,52.5,52.7,52.8,52.9,53,53.1,53.2,53.3,53.4,53.6,53.7,53.8,53.9,54.7,55.5,56.3,57,57.8,58.6],"otfin":[4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4.8,5.6,6.4,7.2,8,8.8,9.6,10.4],"impuestos":[17.5,19.9,21.1,20.9,19.5,17.2,15,13.4,13.1,14.3,16.8,20.1,23.4,26,27.3,27.1,25.4,23,20.5,18.8,18.5,19.7,22.4,25.9,29.4,30.3,29.6,27.3,23.4,18.7,13.8,9.8,7,5.8,5.8,6.4],"flujo_op":[56.4,-0.1,29.8,61.9,88,101.1,97.9,79.2,50.1,18.6,-6.5,-18.1,-12.7,8.9,41.2,75.9,104,118.1,114.4,94,62.5,28.5,1.4,-11.2,-5.3,7.2,38.1,71.9,-32.1,-16.2,-19.7,-44.8,-88.4,-141.4,-191.7,-226.3],"capex":[26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26],"efectivo":[740.4,724.3,738.1,784,856,941.2,1023.1,1086.2,1120.3,1122.9,1100.5,1066.4,1037.7,1030.6,1055.7,1115.6,1203.6,1305.7,1404.1,1482.1,1528.6,1541.1,1526.4,1499.2,1477.9,1469.1,1491.2,1547.1,1499,1526.8,1551.1,1550.3,1505.9,1408.5,1260.8,1078.5],"cartera":[1537.5,1575.9,1597.1,1597.8,1580.5,1552.5,1523.9,1505.4,1504.8,1525.5,1564.9,1615.5,1666.7,1707.4,1729.4,1729.3,1709.7,1678.5,1646.8,1625.9,1624.5,1646,1687.7,1741.5,1795.8,1838.8,1861.7,1860.7,1916.5,1956.9,1993.8,2041.4,2112.4,2214.1,2345.7,2498.3],"inventarios":[1817.7,1863.1,1888.1,1889,1868.6,1835.4,1801.6,1779.7,1779,1803.4,1850,1909.9,1970.4,2018.5,2044.5,2044.4,2021.2,1984.4,1946.9,1922.2,1920.5,1945.9,1995.3,2058.8,2123,2187.9,2229.2,2242.2,2282.6,2306.2,2327.2,2362,2424.8,2523.2,2655.8,2811.8],"anticipos":[60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60],"otac":[120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120],"anc":[3602,3603.9,3605.7,3607.4,3609,3610.5,3611.9,3613.2,3614.4,3615.5,3616.5,3617.4,3618.2,3618.9,3619.5,3620,3620.4,3620.7,3620.9,3621,3621,3620.9,3620.7,3620.4,3620,3619.5,3618.9,3618.2,3617.4,3616.5,3615.5,3614.4,3613.2,3611.9,3610.5,3609],"prov":[908.8,931.5,944,944.5,934.3,917.7,900.8,889.8,889.5,901.7,925,954.9,985.2,1009.2,1022.2,1022.2,1010.6,992.2,973.4,961.1,960.3,973,997.6,1029.4,1061.5,1093.9,1114.6,1121.1,1114.9,1100.9,1086.4,1078.8,1084,1104.6,1139.1,1182],"deuda_cp":[3608,3616,3624,3632,3640,3648,3656,3664,3672,3680,3688,3696,3704,3712,3720,3728,3736,3744,3752,3760,3768,3776,3784,3792,3800,3808,3816,3824,3832,3888,3944,4000,4056,4112,4168,4224],"deuda_lp":[902,904,906,908,910,912,914,916,918,920,922,924,926,928,930,932,934,936,938,940,942,944,946,948,950,952,954,956,958,972,986,1000,1014,1028,1042,1056],"otpc":[260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260],"otpnc":[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100],"ret":[1232.4,1269.4,1308.6,1347.4,1383.5,1415.5,1443.4,1468.3,1492.7,1519.3,1550.5,1587.9,1631.4,1679.8,1730.5,1780.8,1828,1870.7,1908.8,1943.7,1978,2014.6,2056.2,2104.2,2158.9,2215.1,2270.1,2320.8,2364.3,2399.1,2424.8,2442.9,2456,2466.7,2477.4,2489.3],"patrimonio":[2098.8,2135.7,2174.9,2213.7,2249.9,2281.9,2309.7,2334.6,2359,2385.6,2416.9,2454.2,2497.7,2546.1,2596.8,2647.1,2694.3,2737,2775.2,2810.1,2844.4,2880.9,2922.5,2970.6,3025.2,3081.4,3136.4,3187.2,3230.7,3265.4,3291.2,3309.3,3322.3,3333,3343.7,3355.6]},"metas":{"ebitda_m":[13,13,13,13,13,13,13,13,13,13,13,13],"roe":[14,14,14,14,14,14,14,14,14,14,14,14],"spread":[1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5],"rc":[1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25],"pa":[0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85],"ciclo":[82,82,82,82,82,82,82,82,82,82,82,82],"cobint":[3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2],"deuda_ebitda":[2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4],"conv":[55,55,55,55,55,55,55,55,55,55,55,55],"z":[3,3,3,3,3,3,3,3,3,3,3,3]},"cfg":{"tax":35,"wacc":12,"t1":3,"t2":10},"kpis":[{"id":"ebitda_m","tema":"margen","nombre":"Margen EBITDA","unidad":"%","dec":1,"mejor":"alto","modo":"meta","g":0,"a":0,"tipo":"palanca","accion":"Revisar precio, mezcla y costo por producto o servicio; fijar piso de margen y aprobación de descuentos. Separar si la caída es de precio, costo o gasto de expansión.","owner":"Dir. Comercial / CFO"},{"id":"roe","tema":"retorno","nombre":"ROE","unidad":"%","dec":1,"mejor":"alto","modo":"meta","g":0,"a":0,"tipo":"resultado","accion":"Descomponer con DuPont. Si el costo financiero absorbe el resultado operativo (ROE < ROI), renegociar plazo y tasa y no tomar deuda nueva hasta recuperar la caja; frenar inversión que no supere el WACC.","owner":"CFO"},{"id":"spread","tema":"retorno","nombre":"ROIC − WACC","unidad":"pp","dec":1,"mejor":"alto","modo":"abs","g":0,"a":-2,"tipo":"resultado","accion":"Si el retorno no cubre el costo de capital, frenar inversión sin retorno demostrado y liberar capital de trabajo.","owner":"CEO / CFO"},{"id":"rc","tema":"liquidez","nombre":"Razón corriente","unidad":"x","dec":2,"mejor":"alto","modo":"abs","g":1.2,"a":1,"tipo":"resultado","accion":"Contrastar con el calendario real de cobros y pagos; no basta el respaldo contable.","owner":"Tesorería"},{"id":"pa","tema":"liquidez","nombre":"Prueba ácida","unidad":"x","dec":2,"mejor":"alto","modo":"abs","g":0.8,"a":0.6,"tipo":"resultado","accion":"Excluye inventarios y anticipos: si cae, la liquidez depende de activos poco líquidos. Revisar líneas de crédito disponibles.","owner":"Tesorería"},{"id":"ciclo","tema":"caja","nombre":"Ciclo de caja","unidad":"días","dec":0,"mejor":"bajo","modo":"meta","g":0,"a":0,"tipo":"palanca","accion":"Atacar cartera (cobro escalonado, condicionar despachos a vencidos), inventario (congelar compras de baja rotación) y negociar plazo con proveedores.","owner":"CFO / Operaciones"},{"id":"cobint","tema":"deuda","nombre":"Cobertura de intereses","unidad":"x","dec":1,"mejor":"alto","modo":"abs","g":3,"a":1.5,"tipo":"resultado","accion":"Renegociar tasa y plazo, o reemplazar deuda corriente por largo plazo antes de que el costo financiero consuma el EBIT.","owner":"CFO"},{"id":"deuda_ebitda","tema":"deuda","nombre":"Deuda financiera / EBITDA","unidad":"x","dec":1,"mejor":"bajo","modo":"abs","g":2.5,"a":3.5,"tipo":"resultado","accion":"Verificar covenants y calendario de vencimientos; no tomar deuda nueva hasta recuperar EBITDA.","owner":"CFO"},{"id":"conv","tema":"caja","nombre":"Flujo operativo / EBITDA","unidad":"%","dec":0,"mejor":"alto","modo":"abs","g":50,"a":30,"tipo":"palanca","accion":"El EBITDA no se está volviendo caja: cobro escalonado y despachos condicionados a clientes vencidos, congelar compras de inventario de baja rotación y renegociar plazo con proveedores; meta de conversión por línea.","owner":"CFO"},{"id":"z","tema":"riesgo","nombre":"Indicador Z (Altman Z2)","unidad":"","dec":2,"mejor":"alto","modo":"abs","g":2.6,"a":1.11,"tipo":"resultado","accion":"Zona gris o de riesgo: plan de contingencia de liquidez y revisión del modelo de financiación con el comité.","owner":"CEO / CFO"}]};
@@ -157,21 +268,25 @@ function status(k,t){
   const dif=(a,b)=>pp?{t:ppf(a-b),f:k.mejor==='alto'?a>=b:a<=b}:{t:pctf(b?(a-b)/Math.abs(b):0),f:k.mejor==='alto'?a>=b:a<=b};
   return{v,aa,ref,st,adv,dm:dif(v,ref),dy:dif(v,aa)};
 }
-const LBL={verde:'● Cumple',ambar:'▲ Atención',rojo:'■ Crítico'};
-const COL={verde:'#1a7f4b',ambar:'#a35f00',rojo:'#c0392b'};
+const LBL={verde:'Cumple',ambar:'Atención',rojo:'Crítico'};
+const COL={verde:'var(--ok)',ambar:'var(--warn)',rojo:'var(--bad)'};
 const RK={verde:0,ambar:1,rojo:2};
+const chip=st=>`<span class="chip ${st}"><i></i>${LBL[st]}</span>`;
 
 function spark(k,t,st){
-  const w=200,h=38,p=3,D=S.data,ser=[],mt=[];
+  const w=200,h=42,p=4,D=S.data,ser=[],mt=[];
   for(let j=0;j<12;j++){ser.push(VAL[VIEW0+j][k.id]);mt.push(D.metas[k.id][j]);}
   const a=ser.concat(mt),mn=Math.min(...a),mx=Math.max(...a),rg=(mx-mn)||1;
   const X=j=>p+j*(w-2*p)/11,Y=v=>h-p-(v-mn)/rg*(h-2*p);
   const pl=s=>s.map((v,j)=>(j?'L':'M')+X(j).toFixed(1)+' '+Y(v).toFixed(1)).join('');
-  const i=t-VIEW0;
+  const i=t-VIEW0, gid='g'+k.id;
   return `<svg class="sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Tendencia 12 meses de ${k.nombre}: línea sólida real, punteada meta o umbral">
-  <path d="${pl(mt)}" fill="none" stroke="#9aa5b5" stroke-width="1.5" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
-  <path d="${pl(ser)}" fill="none" stroke="#1c2430" stroke-width="2" vector-effect="non-scaling-stroke"/>
-  <circle cx="${X(i)}" cy="${Y(ser[i])}" r="3.5" fill="${COL[st]}" stroke="#fff" stroke-width="1"/></svg>`;
+  <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>
+  <path d="${pl(ser)}L${X(11).toFixed(1)} ${h}L${X(0).toFixed(1)} ${h}Z" fill="url(#${gid})" stroke="none"/>
+  <path d="${pl(mt)}" fill="none" style="stroke:var(--spark-meta)" stroke-width="1.4" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+  <path d="${pl(ser)}" fill="none" style="stroke:var(--ink)" stroke-width="1.8" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+  <line x1="${X(i)}" x2="${X(i)}" y1="0" y2="${h}" style="stroke:var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <circle cx="${X(i)}" cy="${Y(ser[i])}" r="3.6" style="fill:${COL[st]};stroke:var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
 }
 
 function signals(t){
@@ -189,32 +304,47 @@ function signals(t){
 
 function render(){
   const D=S.data,t=VIEW0+S.mes;
-  $('emp').textContent=D.empresa+' · cierre de '+D.meses[t]+' · ratios sobre últimos 12 meses';
+  $('emp').textContent=D.empresa+' · cierre de '+D.meses[t]+' · ratios sobre últimos 12 meses · cifras en millones de pesos';
   $('mes').innerHTML=Array.from({length:12},(_,j)=>`<option value="${j}"${j===S.mes?' selected':''}>${D.meses[VIEW0+j]}</option>`).join('');
   const R=D.kpis.map(k=>({k,s:status(k,t)}));
   const c={verde:0,ambar:0,rojo:0};R.forEach(x=>c[x.s.st]++);
   const score=Math.round((c.verde+c.ambar*0.5)/R.length*100);
   const reds=R.filter(x=>x.s.st==='rojo').map(x=>x.k.nombre);
-  $('banner').innerHTML=`<div class="score">${score}<small> / 100 índice de salud</small></div>
-   <div class="pills"><span class="pill g">● ${c.verde} cumplen</span><span class="pill a">▲ ${c.ambar} atención</span><span class="pill r">■ ${c.rojo} críticos</span></div>
-   <div class="alert">${reds.length?`<b>Alerta:</b> en rojo ${reds.join(', ')}.`:'Sin indicadores críticos este mes.'}</div>`;
+  const ambs=R.filter(x=>x.s.st==='ambar').map(x=>x.k.nombre);
+  const sc=score>=70?'verde':score>=40?'ambar':'rojo', C=2*Math.PI*38;
+  const lvl={verde:'Salud sólida',ambar:'Salud en observación',rojo:'Salud comprometida'}[sc];
+  $('banner').innerHTML=`<div class="gauge">
+     <svg class="ring" viewBox="0 0 92 92" role="img" aria-label="Índice de salud ${score} de 100">
+       <circle cx="46" cy="46" r="38" fill="none" style="stroke:var(--surface-2)" stroke-width="9"/>
+       <circle class="arc" cx="46" cy="46" r="38" fill="none" style="stroke:${COL[sc]}" stroke-width="9" stroke-linecap="round"
+         stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-score/100)).toFixed(1)}" transform="rotate(-90 46 46)"/>
+       <text x="46" y="54" text-anchor="middle" class="num">${score}</text>
+     </svg>
+     <div class="lbl">${lvl}<small>Índice de salud sobre 100 · cierre ${D.meses[t]}</small></div>
+   </div>
+   <div class="sum-r">
+     <div class="pills"><span class="chip verde"><i></i>${c.verde} cumplen</span><span class="chip ambar"><i></i>${c.ambar} en atención</span><span class="chip rojo"><i></i>${c.rojo} críticos</span></div>
+     <div class="alert">${reds.length?`<b>En rojo:</b> ${reds.join(', ')}.`:'Sin indicadores críticos este mes.'}${ambs.length?` <span class="sub">En atención: ${ambs.join(', ')}.</span>`:''}</div>
+   </div>`;
   const X=VAL[t]._x;
   const subs={roe:`ROI (EBIT / activos): ${nf(X.roi,1)} %`,spread:`ROIC ${nf(X.roic,1)} % · EVA ${nf(X.eva,0)} MM`,ebitda_m:`EBITDA ${nf(X.ebitda,0)} MM (12 m)`,z:'≥ 2,60 sano · ≤ 1,11 riesgo'};
-  $('grid').innerHTML=R.map(({k,s})=>`<div class="card ${s.st}">
-   <div class="top"><div><div class="nm">${k.nombre}</div><div class="tag">${k.modo==='abs'?'semáforo por umbral':'semáforo vs presupuesto'} · ${k.mejor==='alto'?'más es mejor':'menos es mejor'}</div></div><div class="bd">${LBL[s.st]}</div></div>
-   <div class="val">${nf(s.v,k.dec)}<small>${k.unidad}</small></div>
-   <div class="cmp"><div>vs presupuesto <b class="dp">${s.dm.t}</b> <span>(${nf(s.ref,k.dec)})</span></div>
-   <div>vs año anterior <b class="${s.dy.f?'fav':'des'}">${s.dy.t}</b> <span>(${nf(s.aa,k.dec)})</span></div>
-   ${k.modo==='abs'?`<div class="xs">Semáforo: verde ${k.mejor==='alto'?'≥':'≤'} ${nf(k.g,k.dec)} · ámbar ${k.mejor==='alto'?'≥':'≤'} ${nf(k.a,k.dec)}</div>`:''}${subs[k.id]?`<div class="xs">${subs[k.id]}</div>`:''}</div>
-   ${spark(k,t,s.st)}</div>`).join('');
+  $('grid').innerHTML=R.map(({k,s})=>`<article class="card ${s.st}">
+   <div class="card-h"><div><div class="nm">${k.nombre}</div><div class="tag">${k.modo==='abs'?'Por umbral':'Vs presupuesto'} · ${k.mejor==='alto'?'más es mejor':'menos es mejor'}</div></div>${chip(s.st)}</div>
+   <div class="val num">${nf(s.v,k.dec)}<small>${k.unidad}</small></div>
+   <div class="cmp num">
+     <div class="row"><span>vs presupuesto <span class="xs">(${nf(s.ref,k.dec)})</span></span><b class="dp">${s.dm.t}</b></div>
+     <div class="row"><span>vs año anterior <span class="xs">(${nf(s.aa,k.dec)})</span></span><b class="${s.dy.f?'fav':'des'}">${s.dy.t}</b></div>
+   </div>
+   ${k.modo==='abs'?`<div class="xs num">Verde ${k.mejor==='alto'?'≥':'≤'} ${nf(k.g,k.dec)} · ámbar ${k.mejor==='alto'?'≥':'≤'} ${nf(k.a,k.dec)}</div>`:''}${subs[k.id]?`<div class="xs num">${subs[k.id]}</div>`:''}
+   <div class="sp-wrap">${spark(k,t,s.st)}</div></article>`).join('');
   const nv=R.filter(x=>x.s.st!=='verde'),ord=(a,b)=>RK[b.s.st]-RK[a.s.st]||b.s.adv-a.s.adv;
   const cand=nv.filter(x=>x.k.tipo==='palanca').sort(ord).concat(nv.filter(x=>x.k.tipo!=='palanca').sort(ord));
   const used={},top=[];cand.forEach(x=>{const m=x.k.tema||x.k.id;if(top.length<3&&!used[m]){used[m]=1;top.push(x)}});
-  $('dec').innerHTML=top.length?top.map(({k,s},j)=>`<div class="dc"><div class="n">${j+1}. ${k.nombre} <span style="color:${COL[s.st]}">${LBL[s.st]}</span></div>
-   <div class="dv">${nf(s.v,k.dec)} ${k.unidad} · ${s.dm.t} vs presupuesto · ${s.dy.t} vs año anterior</div>
+  $('dec').innerHTML=top.length?top.map(({k,s},j)=>`<div class="dc"><div class="n"><span><span class="k">${j+1}</span>${k.nombre}</span>${chip(s.st)}</div>
+   <div class="dv num">${nf(s.v,k.dec)} ${k.unidad} · ${s.dm.t} vs presupuesto · ${s.dy.t} vs año anterior</div>
    <div class="ac"><b>Decisión propuesta:</b> ${esc(k.accion)}</div><div class="ow">Responsable: ${esc(k.owner)}</div></div>`).join(''):'<div class="sub">Ningún indicador fuera de rango este mes.</div>';
   const sg=signals(t);
-  $('sig').innerHTML=sg.length?sg.map(x=>`<li>${x}</li>`).join(''):'<li>Sin señales activas este mes.</li>';
+  $('sig').innerHTML=sg.length?sg.map(x=>`<li>${x}</li>`).join(''):'<li class="none">Sin señales activas este mes.</li>';
   $('foot').textContent=`Supuestos: impuesto ${D.cfg.tax} %, WACC ${D.cfg.wacc} %; ROIC = NOPAT / (patrimonio + deuda financiera − efectivo) a fin de mes; días de cartera e inventario con saldo final y ventas o costo de 12 meses. Z = Altman Z2 (6,56·X1 + 3,26·X2 + 6,72·X3 + 1,05·X4, con X4 = patrimonio contable / pasivo total).`;
 }
 
@@ -225,9 +355,9 @@ function renderBase(){
   let h='<tr><th>Concepto (millones de pesos)</th>'+D.meses.map(m=>`<th>${m}</th>`).join('')+'</tr>',g='';
   D.filas.forEach((f,r)=>{
     if(f.grupo!==g){g=f.grupo;h+=`<tr class="grp"><td colspan="${D.meses.length+1}">${g}</td></tr>`}
-    h+=`<tr><td>${f.nombre}</td>${D.F[f.id].map((v,c)=>`<td><input type="number" step="any" value="${v}" data-s="F" data-k="${f.id}" data-c="${c}"></td>`).join('')}</tr>`;
+    h+=`<tr><td>${f.nombre}</td>${D.F[f.id].map((v,c)=>`<td><input type="number" step="any" value="${v}" aria-label="${esc(f.nombre)} ${D.meses[c]}" data-s="F" data-k="${f.id}" data-c="${c}"></td>`).join('')}</tr>`;
   });
-  h+=`<tr><td><i>Cuadre: activo − pasivo − patrimonio (debe ser 0)</i></td>${D.meses.map((_,c)=>{const F=D.F,x=k=>F[k][c];const a=x('efectivo')+x('cartera')+x('inventarios')+x('anticipos')+x('otac')+x('anc'),p=x('prov')+x('deuda_cp')+x('deuda_lp')+x('otpc')+x('otpnc');const d=a-p-x('patrimonio');return `<td style="color:${Math.abs(d)>1?'#c0392b':'#6a7585'}">${nf(d,1)}</td>`}).join('')}</tr>`;
+  h+=`<tr><td><i>Cuadre: activo − pasivo − patrimonio (debe ser 0)</i></td>${D.meses.map((_,c)=>{const F=D.F,x=k=>F[k][c];const a=x('efectivo')+x('cartera')+x('inventarios')+x('anticipos')+x('otac')+x('anc'),p=x('prov')+x('deuda_cp')+x('deuda_lp')+x('otpc')+x('otpnc');const d=a-p-x('patrimonio');return `<td style="color:${Math.abs(d)>1?'var(--bad)':'var(--mut)'}">${nf(d,1)}</td>`}).join('')}</tr>`;
   $('tF').innerHTML=h;
   $('tM').innerHTML='<tr><th>Indicador</th>'+Array.from({length:12},(_,j)=>`<th>${D.meses[VIEW0+j]}</th>`).join('')+'</tr>'+
     D.kpis.map(k=>`<tr><td>${k.nombre} (${k.unidad||'índice'})</td>${D.metas[k.id].map((v,c)=>`<td><input type="number" step="any" value="${v}" data-s="M" data-k="${k.id}" data-c="${c}"></td>`).join('')}</tr>`).join('');
@@ -242,6 +372,7 @@ function renderBase(){
 function changed(){save();recompute();render();}
 $('base').addEventListener('change',e=>{
   const t=e.target,D=S.data;
+  if(t.id==='imp')return;
   if(t.dataset.s==='F'){const v=parseFloat(t.value);if(!isNaN(v))D.F[t.dataset.k][+t.dataset.c]=v;}
   else if(t.dataset.s==='M'){const v=parseFloat(t.value);if(!isNaN(v))D.metas[t.dataset.k][+t.dataset.c]=v;}
   else if(t.dataset.f){const k=D.kpis[+t.dataset.r];if(t.dataset.n){const v=parseFloat(t.value);if(!isNaN(v))k[t.dataset.f]=v;}else k[t.dataset.f]=t.value;}
@@ -250,14 +381,16 @@ $('base').addEventListener('change',e=>{
   if(t.dataset.s==='F')renderBase();
 });
 $('mes').addEventListener('change',e=>{S.mes=+e.target.value;save();render()});
-function show(b){$('tab').style.display=b?'none':'block';$('base').style.display=b?'block':'none';$('bT').classList.toggle('on',!b);$('bB').classList.toggle('on',b);if(b)renderBase();}
+function show(b){$('tab').hidden=b;$('base').hidden=!b;$('bT').classList.toggle('on',!b);$('bB').classList.toggle('on',b);$('bT').setAttribute('aria-selected',!b);$('bB').setAttribute('aria-selected',b);if(b)renderBase();}
 $('bT').onclick=()=>show(false);$('bB').onclick=()=>show(true);
 $('bExp').onclick=()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(S.data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='dashboard-datos.json';a.click();URL.revokeObjectURL(u)};
-$('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!d.kpis||!d.F||!d.meses||d.meses.length<36)throw 0;S.data=d;S.mes=Math.min(S.mes,11);changed();renderBase()}catch(x){alert('El archivo no tiene el formato esperado (36 meses de datos).')}})};
+$('bImp').onclick=()=>$('imp').click();
+$('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;$('impMsg').textContent='';f.text().then(t=>{try{const d=JSON.parse(t);if(!d.kpis||!d.F||!d.meses||d.meses.length<36)throw 0;S.data=d;S.mes=Math.min(S.mes,11);changed();renderBase()}catch(x){$('impMsg').textContent='El archivo no tiene el formato esperado: debe ser un JSON exportado de este tablero con 36 meses de datos.'}});e.target.value=''};
 let armed=false;
 $('bRst').onclick=function(){if(!armed){armed=true;this.textContent='¿Seguro? Clic otra vez';setTimeout(()=>{armed=false;this.textContent='Restablecer ejemplo'},3000);return}
   S={data:JSON.parse(JSON.stringify(DEFAULT)),mes:11};armed=false;this.textContent='Restablecer ejemplo';changed();renderBase()};
 recompute();render();
 </script>
+
 </body>
 </html>

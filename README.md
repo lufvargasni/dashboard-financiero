@@ -1,4 +1,4 @@
-# Dashboard mensual de salud financiera
+# Dashboard Estados Financieros - Cierre mensual
 
 Tablero de una página que calcula 10 indicadores financieros a partir de una base editable y muestra, para cada uno, el resultado real, el presupuesto, la comparación con el año anterior, la tendencia de 12 meses y un semáforo. Identifica automáticamente las tres desviaciones que ameritan una decisión.
 
