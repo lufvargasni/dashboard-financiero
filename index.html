@@ -162,6 +162,8 @@ td input:focus{outline:2px solid var(--focus);background:var(--surface)}
 .review .rv td.miss{color:var(--mut);font-style:italic}
 .review .rv td.chg{background:var(--accent-soft)}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;box-shadow:0 6px 20px rgb(0 0 0 / .2);max-width:calc(100% - 32px)}
+.toast.err{background:var(--bad);color:#fff}
 @media(max-width:1180px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:980px){.two,.dec{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.summary{grid-template-columns:minmax(0,1fr)}}
@@ -179,6 +181,7 @@ td input:focus{outline:2px solid var(--focus);background:var(--surface)}
     </div>
     <div class="ctrl">
       <label class="field" for="mes">Mes de cierre <select id="mes"></select></label>
+      <button class="btn" id="bPdf" title="Descarga un resumen imprimible del cierre del mes elegido">Descargar PDF</button>
       <button class="btn btn-pri" id="bDocTop" title="Extrae las cifras de un PDF, Word o Excel y llena la base">Importar documento</button>
       <div class="seg" role="tablist" aria-label="Vista">
         <button id="bT" class="on" role="tab">Tablero</button><button id="bB" role="tab">Base editable</button>
@@ -244,6 +247,7 @@ td input:focus{outline:2px solid var(--focus);background:var(--surface)}
   </div>
 </div>
 </main>
+<div id="toast" class="toast" role="status" hidden></div>
 
 <script>
 const DEFAULT={"empresa":"Empresa ejemplo (datos ilustrativos)","meses":["nov-23","dic-23","ene-24","feb-24","mar-24","abr-24","may-24","jun-24","jul-24","ago-24","sep-24","oct-24","nov-24","dic-24","ene-25","feb-25","mar-25","abr-25","may-25","jun-25","jul-25","ago-25","sep-25","oct-25","nov-25","dic-25","ene-26","feb-26","mar-26","abr-26","may-26","jun-26","jul-26","ago-26","sep-26","oct-26"],"filas":[{"id":"ventas","nombre":"Ventas / ingresos operativos","grupo":"Resultados (flujo mensual)"},{"id":"costo","nombre":"Costo de ventas","grupo":"Resultados (flujo mensual)"},{"id":"gop","nombre":"Gastos de administración y ventas","grupo":"Resultados (flujo mensual)"},{"id":"otros","nombre":"Otros ingresos/gastos operativos (neto, + ingreso)","grupo":"Resultados (flujo mensual)"},{"id":"da","nombre":"Depreciación y amortización (memo; ya incluida en costos y gastos)","grupo":"Resultados (flujo mensual)"},{"id":"intereses","nombre":"Intereses","grupo":"Resultados (flujo mensual)"},{"id":"otfin","nombre":"Otros gastos financieros netos (comisiones, cambio)","grupo":"Resultados (flujo mensual)"},{"id":"impuestos","nombre":"Impuesto de renta","grupo":"Resultados (flujo mensual)"},{"id":"flujo_op","nombre":"Flujo de caja operativo","grupo":"Resultados (flujo mensual)"},{"id":"capex","nombre":"CAPEX","grupo":"Resultados (flujo mensual)"},{"id":"efectivo","nombre":"Efectivo y equivalentes","grupo":"Balance (saldo a fin de mes)"},{"id":"cartera","nombre":"Cuentas por cobrar comerciales","grupo":"Balance (saldo a fin de mes)"},{"id":"inventarios","nombre":"Inventarios","grupo":"Balance (saldo a fin de mes)"},{"id":"anticipos","nombre":"Anticipos a proveedores","grupo":"Balance (saldo a fin de mes)"},{"id":"otac","nombre":"Otros activos corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"anc","nombre":"Activos no corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"prov","nombre":"Proveedores y CxP comerciales","grupo":"Balance (saldo a fin de mes)"},{"id":"deuda_cp","nombre":"Deuda financiera corriente","grupo":"Balance (saldo a fin de mes)"},{"id":"deuda_lp","nombre":"Deuda financiera no corriente","grupo":"Balance (saldo a fin de mes)"},{"id":"otpc","nombre":"Otros pasivos corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"otpnc","nombre":"Otros pasivos no corrientes","grupo":"Balance (saldo a fin de mes)"},{"id":"ret","nombre":"Utilidades retenidas","grupo":"Balance (saldo a fin de mes)"},{"id":"patrimonio","nombre":"Patrimonio total","grupo":"Balance (saldo a fin de mes)"}],"F":{"ventas":[1025,1050.6,1064.7,1065.2,1053.7,1035,1016,1003.6,1003.2,1017,1043.3,1077,1111.1,1138.2,1152.9,1152.8,1139.8,1119,1097.9,1083.9,1083,1097.3,1125.1,1161,1197.2,1225.9,1241.1,1240.5,1225.9,1203,1179.8,1164.3,1162.8,1177.7,1207.1,1245],"costo":[717.5,735.4,745.3,745.6,737.6,724.5,711.2,702.5,702.2,711.9,730.3,753.9,777.8,796.8,807,807,797.9,783.3,768.5,758.8,758.1,768.1,787.6,812.7,838,863.6,879.9,885.1,880.2,869.2,857.7,851.7,855.8,872.1,899.3,933.1],"gop":[205,205.6,206.2,206.8,207.5,208.1,208.7,209.3,209.9,210.5,211.2,211.8,212.4,213,213.6,214.2,214.8,215.5,216.1,216.7,217.3,217.9,218.5,219.1,219.8,220.4,221,221.6,222.2,222.8,223.5,224.1,224.7,225.3,225.9,226.5],"otros":[2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],"da":[24,24.1,24.2,24.3,24.4,24.5,24.6,24.7,24.8,24.9,25,25.1,25.2,25.3,25.4,25.5,25.6,25.7,25.8,25.9,26,26.1,26.2,26.3,26.4,26.5,26.6,26.7,26.8,26.9,27,27.1,27.2,27.3,27.4,27.5],"intereses":[50.6,50.7,50.9,51,51.1,51.2,51.3,51.4,51.5,51.6,51.8,51.9,52,52.1,52.2,52.3,52.4,52.5,52.7,52.8,52.9,53,53.1,53.2,53.3,53.4,53.6,53.7,53.8,53.9,54.7,55.5,56.3,57,57.8,58.6],"otfin":[4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4.8,5.6,6.4,7.2,8,8.8,9.6,10.4],"impuestos":[17.5,19.9,21.1,20.9,19.5,17.2,15,13.4,13.1,14.3,16.8,20.1,23.4,26,27.3,27.1,25.4,23,20.5,18.8,18.5,19.7,22.4,25.9,29.4,30.3,29.6,27.3,23.4,18.7,13.8,9.8,7,5.8,5.8,6.4],"flujo_op":[56.4,-0.1,29.8,61.9,88,101.1,97.9,79.2,50.1,18.6,-6.5,-18.1,-12.7,8.9,41.2,75.9,104,118.1,114.4,94,62.5,28.5,1.4,-11.2,-5.3,7.2,38.1,71.9,-32.1,-16.2,-19.7,-44.8,-88.4,-141.4,-191.7,-226.3],"capex":[26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26],"efectivo":[740.4,724.3,738.1,784,856,941.2,1023.1,1086.2,1120.3,1122.9,1100.5,1066.4,1037.7,1030.6,1055.7,1115.6,1203.6,1305.7,1404.1,1482.1,1528.6,1541.1,1526.4,1499.2,1477.9,1469.1,1491.2,1547.1,1499,1526.8,1551.1,1550.3,1505.9,1408.5,1260.8,1078.5],"cartera":[1537.5,1575.9,1597.1,1597.8,1580.5,1552.5,1523.9,1505.4,1504.8,1525.5,1564.9,1615.5,1666.7,1707.4,1729.4,1729.3,1709.7,1678.5,1646.8,1625.9,1624.5,1646,1687.7,1741.5,1795.8,1838.8,1861.7,1860.7,1916.5,1956.9,1993.8,2041.4,2112.4,2214.1,2345.7,2498.3],"inventarios":[1817.7,1863.1,1888.1,1889,1868.6,1835.4,1801.6,1779.7,1779,1803.4,1850,1909.9,1970.4,2018.5,2044.5,2044.4,2021.2,1984.4,1946.9,1922.2,1920.5,1945.9,1995.3,2058.8,2123,2187.9,2229.2,2242.2,2282.6,2306.2,2327.2,2362,2424.8,2523.2,2655.8,2811.8],"anticipos":[60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60,60],"otac":[120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120,120],"anc":[3602,3603.9,3605.7,3607.4,3609,3610.5,3611.9,3613.2,3614.4,3615.5,3616.5,3617.4,3618.2,3618.9,3619.5,3620,3620.4,3620.7,3620.9,3621,3621,3620.9,3620.7,3620.4,3620,3619.5,3618.9,3618.2,3617.4,3616.5,3615.5,3614.4,3613.2,3611.9,3610.5,3609],"prov":[908.8,931.5,944,944.5,934.3,917.7,900.8,889.8,889.5,901.7,925,954.9,985.2,1009.2,1022.2,1022.2,1010.6,992.2,973.4,961.1,960.3,973,997.6,1029.4,1061.5,1093.9,1114.6,1121.1,1114.9,1100.9,1086.4,1078.8,1084,1104.6,1139.1,1182],"deuda_cp":[3608,3616,3624,3632,3640,3648,3656,3664,3672,3680,3688,3696,3704,3712,3720,3728,3736,3744,3752,3760,3768,3776,3784,3792,3800,3808,3816,3824,3832,3888,3944,4000,4056,4112,4168,4224],"deuda_lp":[902,904,906,908,910,912,914,916,918,920,922,924,926,928,930,932,934,936,938,940,942,944,946,948,950,952,954,956,958,972,986,1000,1014,1028,1042,1056],"otpc":[260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260,260],"otpnc":[100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100],"ret":[1232.4,1269.4,1308.6,1347.4,1383.5,1415.5,1443.4,1468.3,1492.7,1519.3,1550.5,1587.9,1631.4,1679.8,1730.5,1780.8,1828,1870.7,1908.8,1943.7,1978,2014.6,2056.2,2104.2,2158.9,2215.1,2270.1,2320.8,2364.3,2399.1,2424.8,2442.9,2456,2466.7,2477.4,2489.3],"patrimonio":[2098.8,2135.7,2174.9,2213.7,2249.9,2281.9,2309.7,2334.6,2359,2385.6,2416.9,2454.2,2497.7,2546.1,2596.8,2647.1,2694.3,2737,2775.2,2810.1,2844.4,2880.9,2922.5,2970.6,3025.2,3081.4,3136.4,3187.2,3230.7,3265.4,3291.2,3309.3,3322.3,3333,3343.7,3355.6]},"metas":{"ebitda_m":[13,13,13,13,13,13,13,13,13,13,13,13],"roe":[14,14,14,14,14,14,14,14,14,14,14,14],"spread":[1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5],"rc":[1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.25],"pa":[0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85,0.85],"ciclo":[82,82,82,82,82,82,82,82,82,82,82,82],"cobint":[3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2,3.2],"deuda_ebitda":[2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4,2.4],"conv":[55,55,55,55,55,55,55,55,55,55,55,55],"z":[3,3,3,3,3,3,3,3,3,3,3,3]},"cfg":{"tax":35,"wacc":12,"t1":3,"t2":10},"kpis":[{"id":"ebitda_m","tema":"margen","nombre":"Margen EBITDA","unidad":"%","dec":1,"mejor":"alto","modo":"meta","g":0,"a":0,"tipo":"palanca","accion":"Revisar precio, mezcla y costo por producto o servicio; fijar piso de margen y aprobación de descuentos. Separar si la caída es de precio, costo o gasto de expansión.","owner":"Dir. Comercial / CFO"},{"id":"roe","tema":"retorno","nombre":"ROE","unidad":"%","dec":1,"mejor":"alto","modo":"meta","g":0,"a":0,"tipo":"resultado","accion":"Descomponer con DuPont. Si el costo financiero absorbe el resultado operativo (ROE < ROI), renegociar plazo y tasa y no tomar deuda nueva hasta recuperar la caja; frenar inversión que no supere el WACC.","owner":"CFO"},{"id":"spread","tema":"retorno","nombre":"ROIC − WACC","unidad":"pp","dec":1,"mejor":"alto","modo":"abs","g":0,"a":-2,"tipo":"resultado","accion":"Si el retorno no cubre el costo de capital, frenar inversión sin retorno demostrado y liberar capital de trabajo.","owner":"CEO / CFO"},{"id":"rc","tema":"liquidez","nombre":"Razón corriente","unidad":"x","dec":2,"mejor":"alto","modo":"abs","g":1.2,"a":1,"tipo":"resultado","accion":"Contrastar con el calendario real de cobros y pagos; no basta el respaldo contable.","owner":"Tesorería"},{"id":"pa","tema":"liquidez","nombre":"Prueba ácida","unidad":"x","dec":2,"mejor":"alto","modo":"abs","g":0.8,"a":0.6,"tipo":"resultado","accion":"Excluye inventarios y anticipos: si cae, la liquidez depende de activos poco líquidos. Revisar líneas de crédito disponibles.","owner":"Tesorería"},{"id":"ciclo","tema":"caja","nombre":"Ciclo de caja","unidad":"días","dec":0,"mejor":"bajo","modo":"meta","g":0,"a":0,"tipo":"palanca","accion":"Atacar cartera (cobro escalonado, condicionar despachos a vencidos), inventario (congelar compras de baja rotación) y negociar plazo con proveedores.","owner":"CFO / Operaciones"},{"id":"cobint","tema":"deuda","nombre":"Cobertura de intereses","unidad":"x","dec":1,"mejor":"alto","modo":"abs","g":3,"a":1.5,"tipo":"resultado","accion":"Renegociar tasa y plazo, o reemplazar deuda corriente por largo plazo antes de que el costo financiero consuma el EBIT.","owner":"CFO"},{"id":"deuda_ebitda","tema":"deuda","nombre":"Deuda financiera / EBITDA","unidad":"x","dec":1,"mejor":"bajo","modo":"abs","g":2.5,"a":3.5,"tipo":"resultado","accion":"Verificar covenants y calendario de vencimientos; no tomar deuda nueva hasta recuperar EBITDA.","owner":"CFO"},{"id":"conv","tema":"caja","nombre":"Flujo operativo / EBITDA","unidad":"%","dec":0,"mejor":"alto","modo":"abs","g":50,"a":30,"tipo":"palanca","accion":"El EBITDA no se está volviendo caja: cobro escalonado y despachos condicionados a clientes vencidos, congelar compras de inventario de baja rotación y renegociar plazo con proveedores; meta de conversión por línea.","owner":"CFO"},{"id":"z","tema":"riesgo","nombre":"Indicador Z (Altman Z2)","unidad":"","dec":2,"mejor":"alto","modo":"abs","g":2.6,"a":1.11,"tipo":"resultado","accion":"Zona gris o de riesgo: plan de contingencia de liquidez y revisión del modelo de financiación con el comité.","owner":"CEO / CFO"}]};
@@ -671,6 +675,133 @@ const dz=$('drop');
 ['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('over')}));
 dz.addEventListener('drop',e=>importFiles([...e.dataTransfer.files]));
+
+/* =================== Resumen imprimible en PDF =================== */
+LIBS.jspdf=[CDN+'jspdf/2.5.1/jspdf.umd.min.js'];
+const PC={verde:[23,128,74],ambar:[154,92,6],rojo:[184,54,42]};
+const P_INK=[20,32,46],P_MUT=[93,107,125],P_LINE=[221,227,235],P_ACC=[31,78,121],P_SOFT=[241,244,248],P_META=[154,167,184];
+const ptx=s=>String(s).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+  .replace(/−/g,'-').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/[●▲■]/g,'').replace(/[  ]/g,' ');
+function toast(msg,kind){const el=$('toast');el.textContent=msg;el.className='toast'+(kind?' '+kind:'');el.hidden=!msg;clearTimeout(toast._t);if(msg)toast._t=setTimeout(()=>{el.hidden=true},5000)}
+function summaryData(){
+  const D=S.data,t=VIEW0+S.mes,R=D.kpis.map(k=>({k,s:status(k,t)}));
+  const c={verde:0,ambar:0,rojo:0};R.forEach(x=>c[x.s.st]++);
+  const score=Math.round((c.verde+c.ambar*0.5)/R.length*100),sc=score>=70?'verde':score>=40?'ambar':'rojo';
+  const nv=R.filter(x=>x.s.st!=='verde'),ord=(a,b)=>RK[b.s.st]-RK[a.s.st]||b.s.adv-a.s.adv;
+  const cand=nv.filter(x=>x.k.tipo==='palanca').sort(ord).concat(nv.filter(x=>x.k.tipo!=='palanca').sort(ord));
+  const used={},top=[];cand.forEach(x=>{const m=x.k.tema||x.k.id;if(top.length<3&&!used[m]){used[m]=1;top.push(x)}});
+  return{D,t,R,c,score,sc,top,sg:signals(t),X:VAL[t]._x,
+    lvl:{verde:'Salud sólida',ambar:'Salud en observación',rojo:'Salud comprometida'}[sc],
+    reds:R.filter(x=>x.s.st==='rojo').map(x=>x.k.nombre),ambs:R.filter(x=>x.s.st==='ambar').map(x=>x.k.nombre)};
+}
+async function makePDF(){
+  await need('jspdf');
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=297,H=210,M=14,CW=W-2*M,d=summaryData(),D=d.D,mesTxt=D.meses[d.t];
+  const font=(st,sz,col)=>{doc.setFont('helvetica',st);doc.setFontSize(sz);doc.setTextColor(...(col||P_INK))};
+  const T=(s,x,y,o)=>doc.text(ptx(s),x,y,o);
+  const wrap=(s,w)=>doc.splitTextToSize(ptx(s),w);
+  const dot=(x,y,st,r)=>{doc.setFillColor(...PC[st]);if(st==='ambar'){const q=(r||1.3)*1.15;doc.triangle(x,y-q,x-q,y+q*0.8,x+q,y+q*0.8,'F')}else if(st==='rojo'){const q=(r||1.3)*0.95;doc.rect(x-q,y-q,2*q,2*q,'F')}else doc.circle(x,y,r||1.3,'F')};
+  const band=(sub)=>{doc.setFillColor(...P_ACC);doc.rect(0,0,W,22,'F');font('bold',15,[255,255,255]);T('Dashboard Estados Financieros - Cierre mensual',M,10.5);
+    font('normal',8.5,[220,230,242]);T(sub,M,17);T('Generado el '+new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'}),W-M,17,{align:'right'})};
+  const sub=`${D.empresa} · Cierre de ${mesTxt} · Ratios sobre los últimos 12 meses · Cifras en millones de pesos`;
+
+  /* ---- Página 1: resumen e indicadores ---- */
+  band(sub);
+  let y=28;
+  doc.setDrawColor(...P_LINE);doc.setFillColor(...P_SOFT);doc.roundedRect(M,y,CW,24,2,2,'FD');
+  font('bold',26,PC[d.sc]);T(String(d.score),M+7,y+14);
+  const sw=doc.getTextWidth(String(d.score));font('normal',9,P_MUT);T('/ 100',M+8+sw,y+14);
+  font('bold',11);T(d.lvl,M+34,y+9.5);font('normal',8,P_MUT);T('Índice de salud financiera',M+34,y+14);
+  doc.setFillColor(...P_LINE);doc.rect(M+34,y+17,60,2,'F');doc.setFillColor(...PC[d.sc]);doc.rect(M+34,y+17,60*d.score/100,2,'F');
+  let px=M+106;
+  [['verde',d.c.verde+' cumplen'],['ambar',d.c.ambar+' en atención'],['rojo',d.c.rojo+' críticos']].forEach(([st,l])=>{dot(px+1.4,y+7.6,st);font('bold',9,PC[st]);T(l,px+4.5,y+8.8);px+=doc.getTextWidth(l)+12});
+  font('normal',8.5);
+  let al=d.reds.length?'En rojo: '+d.reds.join(', ')+'.':'Sin indicadores críticos este mes.';
+  if(d.ambs.length)al+='  En atención: '+d.ambs.join(', ')+'.';
+  doc.text(wrap(al,CW-98).slice(0,2),M+106,y+14.5);
+
+  y=59;
+  const cols=[['Indicador',64,'l'],['Valor',26,'r'],['Estado',25,'l'],['Presupuesto',24,'r'],['Vs presupuesto',25,'r'],['Año anterior',24,'r'],['Vs año anterior',26,'r'],['Tendencia 12 meses',CW-214,'l']];
+  const cx=[];let acc=M;cols.forEach(c=>{cx.push(acc);acc+=c[1]});
+  doc.setFillColor(...P_SOFT);doc.rect(M,y,CW,8,'F');font('bold',7.5,P_MUT);
+  cols.forEach((c,i)=>T(c[0],c[2]==='r'?cx[i]+c[1]-3:cx[i]+(i?3:2),y+5.3,c[2]==='r'?{align:'right'}:undefined));
+  y+=8;const RH=10.6;
+  d.R.forEach(({k,s},ri)=>{
+    const yc=y+RH/2;
+    font('bold',9);T(k.nombre,cx[0]+2,yc-0.6);
+    font('normal',6.5,P_MUT);T((k.modo==='abs'?'Por umbral':'Vs presupuesto')+' · '+(k.mejor==='alto'?'más es mejor':'menos es mejor'),cx[0]+2,yc+3);
+    font('bold',10.5);T(nf(s.v,k.dec)+(k.unidad?' '+k.unidad:''),cx[1]+cols[1][1]-3,yc+1.4,{align:'right'});
+    dot(cx[2]+4.5,yc,s.st);font('bold',8.5,PC[s.st]);T(LBL[s.st],cx[2]+7.5,yc+1.2);
+    font('normal',8.5,P_MUT);T(nf(s.ref,k.dec),cx[3]+cols[3][1]-3,yc+1.2,{align:'right'});
+    font('bold',8.5,PC[s.st]);T(s.dm.t,cx[4]+cols[4][1]-3,yc+1.2,{align:'right'});
+    font('normal',8.5,P_MUT);T(nf(s.aa,k.dec),cx[5]+cols[5][1]-3,yc+1.2,{align:'right'});
+    font('bold',8.5,s.dy.f?PC.verde:PC.rojo);T(s.dy.t,cx[6]+cols[6][1]-3,yc+1.2,{align:'right'});
+    const ser=[],mt=[];for(let j=0;j<12;j++){ser.push(VAL[VIEW0+j][k.id]);mt.push(D.metas[k.id][j])}
+    const all=ser.concat(mt),mn=Math.min(...all),mx=Math.max(...all),rg=(mx-mn)||1,sx=cx[7]+3,swd=cols[7][1]-8,sy=y+1.8,sh=RH-3.6;
+    const X=j=>sx+j*swd/11,Y=v=>sy+sh-(v-mn)/rg*sh;
+    doc.setLineWidth(0.25);doc.setDrawColor(...P_META);doc.setLineDashPattern([0.8,0.8],0);
+    for(let j=1;j<12;j++)doc.line(X(j-1),Y(mt[j-1]),X(j),Y(mt[j]));
+    doc.setLineDashPattern([],0);doc.setLineWidth(0.45);doc.setDrawColor(...P_INK);
+    for(let j=1;j<12;j++)doc.line(X(j-1),Y(ser[j-1]),X(j),Y(ser[j]));
+    const i=d.t-VIEW0;doc.setFillColor(...PC[s.st]);doc.circle(X(i),Y(ser[i]),0.9,'F');
+    y+=RH;doc.setDrawColor(...P_LINE);doc.setLineWidth(0.2);doc.line(M,y,M+CW,y);
+  });
+  y+=5;font('normal',7,P_MUT);
+  doc.text(wrap('Tendencia: línea continua = valor real; línea punteada = presupuesto o umbral; el punto marca el mes de cierre. Semáforo «vs presupuesto»: verde hasta '+D.cfg.t1+' % de desvío adverso, ámbar hasta '+D.cfg.t2+' %, rojo por encima. Indicador Z (Altman Z2): >= 2,60 zona segura; 1,11 a 2,59 zona gris; <= 1,10 zona de riesgo.',CW),M,y);
+
+  /* ---- Página 2: decisiones y señales ---- */
+  doc.addPage();band(sub);y=31;
+  font('bold',12);T('Tres desviaciones que ameritan una decisión',M,y);y+=6;
+  const gap=6,bw=(CW-2*gap)/3;
+  if(d.top.length){
+    const boxes=d.top.map(({k,s},j)=>{
+      font('bold',9.5);const tl=wrap(`${j+1}. ${k.nombre}`,bw-30);
+      font('normal',8);const dv=wrap(`${nf(s.v,k.dec)} ${k.unidad} · ${s.dm.t} vs presupuesto · ${s.dy.t} vs año anterior`,bw-8);
+      const ac=wrap('Decisión propuesta: '+k.accion,bw-8);
+      return{k,s,tl,dv,ac,h:7+tl.length*4.3+dv.length*3.7+3+ac.length*3.9+10}});
+    const bh=Math.max(...boxes.map(b=>b.h));
+    boxes.forEach((b,j)=>{
+      const bx=M+j*(bw+gap);let yy=y;
+      doc.setDrawColor(...P_LINE);doc.setFillColor(...P_SOFT);doc.roundedRect(bx,yy,bw,bh,2,2,'FD');
+      doc.setFillColor(...PC[b.s.st]);doc.rect(bx,yy+2,1.2,bh-4,'F');
+      yy+=7;font('bold',9.5);doc.text(b.tl,bx+5,yy);
+      dot(bx+bw-22,yy-1.2,b.s.st);font('bold',8,PC[b.s.st]);T(LBL[b.s.st],bx+bw-19,yy);
+      yy+=b.tl.length*4.3;font('normal',8,P_MUT);doc.text(b.dv,bx+5,yy);
+      yy+=b.dv.length*3.7+3;font('normal',8.5);doc.text(b.ac,bx+5,yy);
+      font('normal',7.5,P_MUT);T('Responsable: '+b.k.owner,bx+5,y+bh-4);
+    });
+    y+=bh+4;
+  }else{font('normal',9,P_MUT);T('Ningún indicador fuera de rango este mes.',M,y+4);y+=10}
+  font('normal',7,P_MUT);const nt=wrap('Se priorizan las palancas (lo que la gerencia puede mover) por gravedad del semáforo; si hay menos de tres temas, la lista se completa con indicadores de resultado. Cada decisión necesita responsable y fecha de evaluación.',CW);doc.text(nt,M,y);y+=nt.length*3+7;
+
+  font('bold',12);T('Señales a investigar',M,y);y+=6;
+  const sg=d.sg.length?d.sg:['Sin señales activas este mes.'];
+  sg.forEach(sgl=>{const parts=sgl.match(/^<b>(.*?)<\/b>(.*)$/);font('normal',8.8);
+    const lines=wrap(ptx(sgl),CW-8);
+    if(y+lines.length*4.2>H-24){doc.addPage();band(sub);y=31}
+    doc.setFillColor(...(d.sg.length?PC.ambar:PC.verde));doc.rect(M,y-3,1,lines.length*4.2+0.6,'F');
+    if(parts){font('bold',8.8);const head=ptx(parts[1]);const hl=wrap(head,CW-8);
+      if(hl.length===1&&doc.getTextWidth(ptx(sgl))<=CW-8){T(head,M+4,y);const hw=doc.getTextWidth(head);font('normal',8.8);T(ptx(parts[2]).replace(/^\s*/,' '),M+4+hw+0.4,y);y+=4.2}
+      else{font('normal',8.8);doc.text(lines,M+4,y);y+=lines.length*4.2}}
+    else{doc.text(lines,M+4,y);y+=lines.length*4.2}
+    y+=2.2});
+  y+=4;font('normal',7,P_MUT);
+  const foot=wrap(`Las señales son alertas para investigar, no pruebas de insolvencia ni de error. Supuestos: impuesto ${D.cfg.tax} %, WACC ${D.cfg.wacc} %; ROIC = NOPAT / (patrimonio + deuda financiera - efectivo) a fin de mes; días de cartera e inventario con saldo final y ventas o costo de 12 meses. Z = Altman Z2 (6,56·X1 + 3,26·X2 + 6,72·X3 + 1,05·X4, con X4 = patrimonio contable / pasivo total). EBITDA 12 meses: ${nf(d.X.ebitda,0)} MM · ROIC ${nf(d.X.roic,1)} % · EVA ${nf(d.X.eva,0)} MM.`,CW);
+  if(y+foot.length*3>H-12){doc.addPage();band(sub);y=31}
+  doc.text(foot,M,y);
+
+  const n=doc.getNumberOfPages();for(let p=1;p<=n;p++){doc.setPage(p);font('normal',7.5,P_MUT);T(`Página ${p} de ${n}`,W-M,H-7,{align:'right'});T('Dashboard Estados Financieros - Cierre mensual · '+D.empresa,M,H-7)}
+  const filename=`Estados-financieros-cierre-${mesTxt}.pdf`;
+  if(DL){await DL.save({filename,data:doc.output('arraybuffer')});return}
+  doc.save(filename);
+}
+$('bPdf').onclick=async function(){
+  const b=this,l=b.textContent;b.disabled=true;b.textContent='Generando PDF…';toast('');
+  try{await makePDF();toast('PDF del cierre de '+S.data.meses[VIEW0+S.mes]+' listo.','ok')}
+  catch(e){if(e&&e.code==='declined')toast('');else toast(e&&e.message==='net'?'No se pudo cargar el generador de PDF. Revisa la conexión e inténtalo de nuevo.':'No se pudo generar el PDF en esta vista.','err')}
+  finally{b.disabled=false;b.textContent=l}};
+
 (async()=>{try{if(window.claude&&claude.use){SAMPLE=await claude.use('sample');DL=await claude.use('downloads')}}catch(e){}})();
 recompute();render();
 </script>

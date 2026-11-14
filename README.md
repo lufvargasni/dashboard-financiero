@@ -10,6 +10,9 @@ Tablero de una página que calcula 10 indicadores financieros a partir de una ba
 3. Pestaña **Tablero**: elegir el mes y leer el semáforo, las tres decisiones y las señales a investigar.
 4. **Exportar JSON** guarda la base; **Importar JSON** la recupera.
 
+## Resumen imprimible en PDF
+Botón **Descargar PDF**: genera un resumen del mes elegido en A4 horizontal (2 páginas). La primera trae el índice de salud y la tabla de los 10 indicadores con semáforo, presupuesto, año anterior y tendencia de 12 meses; la segunda, las tres decisiones, las señales a investigar y los supuestos del cálculo.
+
 ## Importar estados financieros (PDF, Word, Excel)
 Botón **Importar documento** (o arrastrar archivos a la Base editable). Formatos: `.pdf`, `.docx`, `.xlsx`, `.xls`, `.csv`.
 
