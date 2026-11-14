@@ -31,6 +31,7 @@
   --spark-meta:#5d6b7d;--focus:#7fb0ff;color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;font:14px/1.5 var(--f-body);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
 .num{font-variant-numeric:tabular-nums}
@@ -139,6 +140,28 @@ td select{border:1px solid var(--line);border-radius:4px;background:var(--surfac
 td input:hover{background:var(--surface-2)}
 td input:focus{outline:2px solid var(--focus);background:var(--surface)}
 
+.btn-pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn-pri:hover{border-color:var(--accent);filter:brightness(1.08)}
+.btn:disabled{opacity:.55;cursor:default}
+.drop{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;border:1.5px dashed var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;background:var(--surface-2)}
+.drop>div{min-width:0;flex:1 1 320px}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.imp-status{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;padding:10px 12px;border-radius:var(--r-sm);background:var(--accent-soft);margin-bottom:12px}
+.imp-status.err{background:var(--bad-bg);color:var(--bad)}
+.imp-status.ok{background:var(--ok-bg);color:var(--ok)}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);flex:none}
+@media(prefers-reduced-motion:no-preference){.spin{animation:sp 0.8s linear infinite}}
+@keyframes sp{to{transform:rotate(360deg)}}
+.review{border:1px solid var(--accent);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:grid;gap:10px}
+.review .meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--mut)}
+.review .meta b{color:var(--ink);font-weight:600}
+.review ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--mut)}
+.review .opts{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;align-items:center}
+.review .opts label{display:inline-flex;gap:6px;align-items:center}
+.review .rv td:first-child{min-width:240px}
+.review .rv td.miss{color:var(--mut);font-style:italic}
+.review .rv td.chg{background:var(--accent-soft)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
 @media(max-width:1180px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:980px){.two,.dec{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.summary{grid-template-columns:minmax(0,1fr)}}
@@ -156,6 +179,7 @@ td input:focus{outline:2px solid var(--focus);background:var(--surface)}
     </div>
     <div class="ctrl">
       <label class="field" for="mes">Mes de cierre <select id="mes"></select></label>
+      <button class="btn btn-pri" id="bDocTop" title="Extrae las cifras de un PDF, Word o Excel y llena la base">Importar documento</button>
       <div class="seg" role="tablist" aria-label="Vista">
         <button id="bT" class="on" role="tab">Tablero</button><button id="bB" role="tab">Base editable</button>
       </div>
@@ -190,6 +214,13 @@ td input:focus{outline:2px solid var(--focus);background:var(--surface)}
 <div class="wrap" id="base" hidden>
   <div class="panel">
     <div class="sec-h"><h2>Base editable</h2><span class="sub">Cambios guardados en este navegador. Para compartir los datos, exporten el JSON.</span></div>
+    <div class="drop" id="drop">
+      <div><b>Importar estados financieros</b><div class="sub">Arrastra aquí uno o varios archivos PDF, Word (.docx) o Excel (.xlsx, .xls, .csv). Se extraen las cifras mensuales, las revisas y luego se llenan en la tabla 1.</div></div>
+      <button class="btn btn-pri" id="bDoc">Elegir archivos</button>
+      <input id="docIn" type="file" accept=".pdf,.docx,.xlsx,.xlsm,.xls,.csv" multiple hidden>
+    </div>
+    <div id="imp-status" class="imp-status" role="status" hidden></div>
+    <div id="review" class="review" hidden></div>
     <div class="tools">
       <button class="btn" id="bExp">Exportar JSON</button>
       <button class="btn" id="bImp">Importar JSON</button><input id="imp" type="file" accept=".json" hidden>
@@ -372,7 +403,7 @@ function renderBase(){
 function changed(){save();recompute();render();}
 $('base').addEventListener('change',e=>{
   const t=e.target,D=S.data;
-  if(t.id==='imp')return;
+  if(!t.dataset.s&&!t.dataset.f&&!(t.id||'').startsWith('c_'))return;
   if(t.dataset.s==='F'){const v=parseFloat(t.value);if(!isNaN(v))D.F[t.dataset.k][+t.dataset.c]=v;}
   else if(t.dataset.s==='M'){const v=parseFloat(t.value);if(!isNaN(v))D.metas[t.dataset.k][+t.dataset.c]=v;}
   else if(t.dataset.f){const k=D.kpis[+t.dataset.r];if(t.dataset.n){const v=parseFloat(t.value);if(!isNaN(v))k[t.dataset.f]=v;}else k[t.dataset.f]=t.value;}
@@ -383,12 +414,264 @@ $('base').addEventListener('change',e=>{
 $('mes').addEventListener('change',e=>{S.mes=+e.target.value;save();render()});
 function show(b){$('tab').hidden=b;$('base').hidden=!b;$('bT').classList.toggle('on',!b);$('bB').classList.toggle('on',b);$('bT').setAttribute('aria-selected',!b);$('bB').setAttribute('aria-selected',b);if(b)renderBase();}
 $('bT').onclick=()=>show(false);$('bB').onclick=()=>show(true);
-$('bExp').onclick=()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(S.data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='dashboard-datos.json';a.click();URL.revokeObjectURL(u)};
+/* Exportar: en claude.ai usa la capacidad de descargas; fuera de claude.ai, un enlace normal */
+let DL=null;
+$('bExp').onclick=async()=>{
+  const json=JSON.stringify(S.data,null,2);$('impMsg').textContent='';
+  if(DL){try{await DL.save({filename:'dashboard-datos.json',data:json})}catch(e){if(e&&e.code!=='declined')$('impMsg').textContent='No se pudo guardar el archivo en esta vista.'}return}
+  const u=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='dashboard-datos.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)};
 $('bImp').onclick=()=>$('imp').click();
 $('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;$('impMsg').textContent='';f.text().then(t=>{try{const d=JSON.parse(t);if(!d.kpis||!d.F||!d.meses||d.meses.length<36)throw 0;S.data=d;S.mes=Math.min(S.mes,11);changed();renderBase()}catch(x){$('impMsg').textContent='El archivo no tiene el formato esperado: debe ser un JSON exportado de este tablero con 36 meses de datos.'}});e.target.value=''};
 let armed=false;
 $('bRst').onclick=function(){if(!armed){armed=true;this.textContent='¿Seguro? Clic otra vez';setTimeout(()=>{armed=false;this.textContent='Restablecer ejemplo'},3000);return}
   S={data:JSON.parse(JSON.stringify(DEFAULT)),mes:11};armed=false;this.textContent='Restablecer ejemplo';changed();renderBase()};
+
+/* =================== Importar documentos (PDF, Word, Excel) =================== */
+const CDN='https://cdnjs.cloudflare.com/ajax/libs/';
+const LIBS={xlsx:[CDN+'xlsx/0.18.5/xlsx.full.min.js'],docx:[CDN+'mammoth/1.6.0/mammoth.browser.min.js'],pdf:[CDN+'pdf.js/3.11.174/pdf.min.js',CDN+'pdf.js/3.11.174/pdf.worker.min.js']};
+const _ld={};
+const loadScript=src=>_ld[src]||(_ld[src]=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>{delete _ld[src];ko(new Error('net'))};document.head.appendChild(s)}));
+async function need(k){for(const s of LIBS[k])await loadScript(s)}
+
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MES_EN=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const pad=n=>String(n).padStart(2,'0');
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9%&\/\-\. ]+/g,' ').replace(/\s+/g,' ').trim();
+const lblToYm=l=>{const m=String(l).match(/^([a-z]{3})-(\d{2})$/);if(!m)return null;const i=MES.indexOf(m[1]);return i<0?null:'20'+m[2]+'-'+pad(i+1)};
+const ymToLbl=ym=>{const[y,m]=ym.split('-');return MES[+m-1]+'-'+y.slice(2)};
+const ymAdd=(ym,k)=>{let[y,m]=ym.split('-').map(Number);m+=k;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return y+'-'+pad(m)};
+const ymPretty=ym=>ymToLbl(ym);
+
+function parseMonth(v){
+  if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+pad(v.getMonth()+1);
+  if(typeof v==='number'){if(v>30000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)}return null}
+  const s=norm(v);if(!s||s.length>24)return null;let m;
+  if((m=s.match(/^(20\d{2})[-\/\. ](\d{1,2})$/))&&+m[2]>=1&&+m[2]<=12)return m[1]+'-'+pad(+m[2]);
+  if((m=s.match(/^(\d{1,2})[-\/\. ](20\d{2})$/))&&+m[1]>=1&&+m[1]<=12)return m[2]+'-'+pad(+m[1]);
+  if((m=s.match(/^\d{1,2}[-\/\.](\d{1,2})[-\/\.](20\d{2})$/))&&+m[1]<=12)return m[2]+'-'+pad(+m[1]);
+  if((m=s.match(/^([a-z]{3,10})\.?[-\/ ]*(?:de )?(\d{2}|20\d{2})$/))){
+    let k=m[1].slice(0,3);if(k==='set')k='sep';let i=MES.indexOf(k);if(i<0)i=MES_EN.indexOf(k);if(i<0)return null;
+    const y=m[2].length===2?'20'+m[2]:m[2];return y+'-'+pad(i+1)}
+  return null;
+}
+function parseNum(v){
+  if(typeof v==='number')return isFinite(v)?v:null;
+  let s=String(v).trim();if(!s||s==='-'||s==='—')return null;
+  let neg=/^\(.*\)$/.test(s)||/^-/.test(s)||/-$/.test(s);
+  s=s.replace(/[^\d.,]/g,'');if(!/\d/.test(s))return null;
+  const lc=s.lastIndexOf(','),lp=s.lastIndexOf('.');
+  if(lc>=0&&lp>=0){const dec=lc>lp?',':'.';s=s.split(dec==','?'.':',').join('');if(dec===',')s=s.replace(',','.')}
+  else if(lc>=0){s=/^\d{1,3}(,\d{3})+$/.test(s)?s.replace(/,/g,''):s.replace(/,/g,'.')}
+  else if(lp>=0){if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'')}
+  const n=parseFloat(s);if(!isFinite(n))return null;return neg?-n:n;
+}
+
+/* ---------- 1. Leer cada archivo ---------- */
+const cellTxt=c=>c instanceof Date?c.getFullYear()+'-'+pad(c.getMonth()+1):String(c??'').trim();
+async function readFile(f){
+  const ext=(f.name.split('.').pop()||'').toLowerCase(),buf=await f.arrayBuffer();
+  if(['xlsx','xlsm','xls','csv'].includes(ext)){
+    await need('xlsx');
+    const wb=XLSX.read(buf,{type:'array',cellDates:true});const tables=[];let text='';
+    wb.SheetNames.forEach(n=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''}).filter(r=>r.some(c=>cellTxt(c)!==''));
+      if(!rows.length)return;tables.push(rows);text+=`\n--- Hoja: ${n} ---\n`+rows.map(r=>r.map(cellTxt).join(' | ')).join('\n')});
+    return{name:f.name,kind:'Excel',text,tables,images:[]};
+  }
+  if(ext==='docx'){
+    await need('docx');
+    const r=await mammoth.convertToHtml({arrayBuffer:buf});const doc=new DOMParser().parseFromString(r.value,'text/html');
+    const tables=[...doc.querySelectorAll('table')].map(t=>[...t.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.textContent.trim())));
+    doc.querySelectorAll('table').forEach(t=>{const p=doc.createElement('pre');p.textContent='\n'+[...t.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.textContent.trim()).join(' | ')).join('\n')+'\n';t.replaceWith(p)});
+    doc.querySelectorAll('p,h1,h2,h3,h4,li').forEach(e=>e.append('\n'));
+    return{name:f.name,kind:'Word',text:doc.body.textContent,tables,images:[]};
+  }
+  if(ext==='pdf'){
+    await need('pdf');
+    const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf),isEvalSupported:false}).promise;
+    let text='';const tables=[],pages=Math.min(pdf.numPages,60);
+    for(let p=1;p<=pages;p++){
+      const page=await pdf.getPage(p),tc=await page.getTextContent();
+      const lines={};tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/3)*3;(lines[y]=lines[y]||[]).push({x:it.transform[4],w:it.width||0,s:it.str.trim()})});
+      const rows=Object.keys(lines).map(Number).sort((a,b)=>b-a).map(y=>{const its=lines[y].sort((a,b)=>a.x-b.x),cells=[];let last=null;
+        its.forEach(it=>{if(last&&it.x-(last.x+last.w)<6)cells[cells.length-1]+=' '+it.s;else cells.push(it.s);last=it});return cells});
+      tables.push(rows);text+=`\n--- Página ${p} ---\n`+rows.map(r=>r.join(' | ')).join('\n');
+    }
+    return{name:f.name,kind:'PDF',text,tables,pdf,pages:pdf.numPages,images:[]};
+  }
+  if(ext==='doc')throw{user:`«${f.name}» es un Word antiguo (.doc). Guárdalo como .docx y vuelve a importarlo.`};
+  throw{user:`«${f.name}» no es un formato admitido. Usa PDF, Word (.docx) o Excel (.xlsx, .xls, .csv).`};
+}
+async function pdfImages(doc,max){
+  const out=[];for(let p=1;p<=Math.min(doc.pdf.numPages,max);p++){
+    const page=await doc.pdf.getPage(p),v0=page.getViewport({scale:1}),sc=Math.min(2,Math.sqrt(1.2e6/(v0.width*v0.height))),v=page.getViewport({scale:sc});
+    const c=document.createElement('canvas');c.width=v.width;c.height=v.height;await page.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+    out.push(await new Promise(r=>c.toBlob(r,'image/png')));}
+  return out;
+}
+
+/* ---------- 2a. Extracción con Claude ---------- */
+const RULES={ventas:'valor del mes',costo:'positivo',gop:'positivo; suma gastos de administración y de ventas',otros:'neto con signo: + si es ingreso, − si es gasto',da:'positivo; dato informativo, ya incluido en costos y gastos',
+  intereses:'positivo',otfin:'positivo; comisiones, diferencia en cambio y otros gastos financieros distintos de intereses',impuestos:'positivo',flujo_op:'con signo',capex:'positivo; compras de propiedad, planta, equipo e intangibles'};
+function buildPrompt(docs,imgNote){
+  const D=S.data;
+  const conceptos=D.filas.map(f=>`- ${f.id}: ${f.nombre} [${f.grupo}]${RULES[f.id]?' — '+RULES[f.id]:''}`).join('\n');
+  let body='',budget=200000;
+  docs.forEach(d=>{const t=d.text.length>budget?d.text.slice(0,budget)+'\n[…texto recortado…]':d.text;budget=Math.max(0,budget-t.length);body+=`\n\n===== Archivo: ${d.name} (${d.kind}) =====\n${t}`});
+  return `Eres un analista financiero. Extrae de los documentos adjuntos las cifras mensuales de los estados financieros de una empresa para llenar una base de datos con estos conceptos (id: descripción [grupo]):
+
+${conceptos}
+
+Reglas:
+1. Expresa todo en MILLONES de pesos. Si el documento está en pesos, miles u otra unidad, convierte y dilo en "unidad_origen".
+2. Los conceptos del grupo «Resultados» son el valor DEL MES. Si el documento trae acumulados del año, obtén el mes restando el acumulado del mes anterior; si no puedes, omite ese dato y explícalo en "notas".
+3. Los conceptos del grupo «Balance» son el saldo a fin de mes.
+4. Si un concepto agrupa varias líneas del documento, súmalas (por ejemplo, gastos de administración + gastos de ventas). Si una línea del documento no corresponde a ningún concepto, no la fuerces.
+5. Deuda financiera corriente y no corriente: obligaciones financieras, préstamos bancarios, bonos y leasing financiero, separados por plazo.
+6. "patrimonio" es el patrimonio total; "ret" son las utilidades retenidas o resultados acumulados (incluye la utilidad del ejercicio si el balance la muestra aparte).
+7. No inventes ni estimes datos que no estén en los documentos: omite el concepto en ese mes.
+8. Usa como clave de mes el formato AAAA-MM (por ejemplo 2026-10).${imgNote?'\n9. '+imgNote:''}
+
+Responde solo con un objeto JSON con esta forma:
+{"empresa": "nombre de la empresa o null", "unidad_origen": "pesos | miles de pesos | millones de pesos | …", "meses": {"2026-09": {"ventas": 1207.1, "costo": 899.3}, "2026-10": {"ventas": 1245}}, "notas": ["supuestos o advertencias breves"]}
+
+Documentos:${body}`;
+}
+
+/* ---------- 2b. Extracción automática por etiquetas (sin Claude) ---------- */
+const MAP=[
+  ['deuda_lp',/(obligaciones|deuda|prestamos|pasivos) financier.*(no corriente|largo plazo)/],
+  ['deuda_cp',/(obligaciones|deuda|prestamos|pasivos) financier.*(corriente|corto plazo)/],
+  ['otpnc',/^otros pasivos no corrientes/],['otpc',/^otros pasivos corrientes/],
+  ['anc',/^(total )?activos? no corrientes?$/],['otac',/^otros activos corrientes/],
+  ['flujo_op',/flujo.*(actividades de )?operaci/],['capex',/^capex|(adquisicion|compra)e?s? de (propiedad|activos fijos|ppe)/],
+  ['ventas',/^(total )?(ventas( netas)?|ingresos (operacionales|operativos|de actividades ordinarias|por ventas|netos))$/],
+  ['costo',/^costos? de (las )?ventas?$|^costo de (los )?(bienes|productos) vendidos/],
+  ['gop',/^gastos? (operacionales |operativos )?de administracion y ventas$/],['gop+',/^gastos? (operacionales )?de (administracion|ventas)$/],
+  ['otros',/^otros (ingresos|gastos)( y (ingresos|gastos))?( operacionales| operativos)?( netos?)?$/],
+  ['da',/^depreciacion|^amortizacion/],['intereses',/^(?!ingresos).*intereses/],
+  ['otfin',/^otros gastos financieros|^comisiones|^diferencia en cambio/],['impuestos',/^(gasto (por )?)?(impuesto|provision( de)? impuesto) (de|sobre la|a las ganancias|de renta)/],
+  ['efectivo',/^efectivo/],['cartera',/^(cuentas|deudores) (comerciales )?(por cobrar|comerciales)|^cartera|^clientes/],
+  ['inventarios',/^inventarios?$/],['anticipos',/^anticipos/],
+  ['prov',/^proveedores|^cuentas (comerciales )?por pagar( comerciales)?/],
+  ['ret',/^(utilidades|ganancias|resultados) (retenidas|acumulad)/],['patrimonio',/^(total )?patrimonio( total)?( neto)?$/]];
+const POS=['costo','gop','da','intereses','otfin','impuestos','capex'];
+function heuristic(docs){
+  const meses={},seen={};
+  docs.forEach(d=>d.tables.forEach(rows=>{
+    let h=-1,cols={};
+    for(let r=0;r<Math.min(rows.length,40);r++){const c={};rows[r].forEach((v,j)=>{const ym=parseMonth(v);if(ym)c[j]=ym});if(Object.keys(c).length>=2){h=r;cols=c;break}}
+    if(h<0)return;
+    for(let r=h+1;r<rows.length;r++){
+      const row=rows[r],li=row.findIndex(v=>typeof v==='string'&&/[a-z]/i.test(v)&&parseNum(v)===null);if(li<0)continue;
+      const lab=norm(row[li]).replace(/^[\d\.\s]+/,'');const hit=MAP.find(([,re])=>re.test(lab));if(!hit)continue;
+      let id=hit[0],add=false;if(id==='gop+'){id='gop';add=true}
+      Object.entries(cols).forEach(([j,ym])=>{let n=parseNum(row[j]);if(n===null)return;if(POS.includes(id))n=Math.abs(n);
+        const m=meses[ym]=meses[ym]||{},key=ym+id;
+        if(add){if(seen[key]==='full')return;m[id]=(seen[key]==='part'?m[id]:0)+n;seen[key]='part'}
+        else if(seen[key]!=='full'){m[id]=n;seen[key]='full'}});
+    }
+  }));
+  return{empresa:null,unidad_origen:null,meses,notas:[]};
+}
+
+/* ---------- 3. Revisión y aplicación ---------- */
+let SAMPLE=null,PEND=null,CTL=null;
+function setStatus(html,kind,cancel){const el=$('imp-status');el.hidden=!html;el.className='imp-status'+(kind?' '+kind:'');el.innerHTML=html?(kind?'':'<span class="spin" aria-hidden="true"></span>')+`<span>${html}</span>`+(cancel?' <button class="btn" id="bCancel">Cancelar</button>':''):'';if(cancel)$('bCancel').onclick=()=>CTL&&CTL.abort()}
+function clean(res){
+  const ids=S.data.filas.map(f=>f.id),meses={};
+  if(res&&res.meses&&typeof res.meses==='object')Object.entries(res.meses).forEach(([k,o])=>{
+    const ym=/^\d{4}-\d{2}$/.test(k)?k:parseMonth(k);if(!ym||!o||typeof o!=='object')return;
+    Object.entries(o).forEach(([id,v])=>{const n=typeof v==='number'?v:parseNum(v);if(ids.includes(id)&&n!==null&&isFinite(n))(meses[ym]=meses[ym]||{})[id]=Math.round(n*100)/100})});
+  return{empresa:typeof res?.empresa==='string'&&res.empresa.trim()?res.empresa.trim():null,unidad_origen:res?.unidad_origen||null,notas:Array.isArray(res?.notas)?res.notas.map(String).slice(0,12):[],meses};
+}
+async function importFiles(files){
+  if(!files||!files.length)return;show(true);
+  $('review').hidden=true;PEND=null;
+  try{
+    setStatus('Leyendo '+(files.length>1?files.length+' archivos':'«'+esc(files[0].name)+'»')+'…');
+    const docs=[];for(const f of files)docs.push(await readFile(f));
+    let res=null,method='',warn='';
+    if(SAMPLE){
+      let imgs=[],imgNote='';
+      const lim=await SAMPLE.limits().catch(()=>null);
+      for(const d of docs)if(d.kind==='PDF'&&d.text.replace(/\s|---.*---/g,'').length<80*Math.min(d.pages,60)&&lim?.images){
+        setStatus('El PDF «'+esc(d.name)+'» parece escaneado; preparando imágenes de sus páginas…');
+        imgs=imgs.concat(await pdfImages(d,Math.max(1,lim.images.maxCount-imgs.length)));imgNote='Algunas páginas vienen como imágenes (PDF escaneado): lee las cifras de las imágenes.'}
+      CTL=new AbortController();
+      setStatus('Claude está leyendo los estados financieros y extrayendo las cifras mensuales…',null,true);
+      try{res=await SAMPLE.json(buildPrompt(docs,imgNote),{signal:CTL.signal,cache:false,...(imgs.length?{images:imgs.slice(0,lim.images.maxCount)}:{})});method='Extraído con Claude'}
+      catch(e){
+        if(e?.code==='cancelled'){setStatus('');return}
+        if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(e?.code)){SAMPLE=null;warn='Claude no está disponible en esta vista; se usó la lectura automática de tablas, que es menos precisa.'}
+        else if(e?.code==='rate_limited'){setStatus('Se alcanzó el límite de uso de Claude. Inténtalo de nuevo en unos minutos.','err');return}
+        else if(e?.code==='prompt_too_large'){setStatus('El documento es demasiado largo. Importa solo las páginas o las hojas de los estados financieros.','err');return}
+        else if(e?.code==='invalid_json'){setStatus('Claude no devolvió las cifras en el formato esperado. Vuelve a importar el archivo.','err');return}
+        else{setStatus('No se pudo completar la extracción ('+esc(e?.code||'error')+'). Vuelve a intentarlo.','err');return}
+      }
+    }
+    if(!res){res=heuristic(docs);method='Lectura automática de tablas (sin Claude)';
+      if(!warn&&!SAMPLE)warn='Fuera de claude.ai el tablero lee solo tablas con meses en columnas y conceptos con nombres estándar. Para PDF escaneados o formatos libres, ábrelo en claude.ai.'}
+    const R=clean(res);
+    if(!Object.keys(R.meses).length){setStatus('No se encontraron cifras mensuales reconocibles en '+(files.length>1?'los archivos':'el archivo')+'. '+(warn||'Revisa que el documento tenga los estados financieros por mes.'),'err');return}
+    PEND={...R,method,warn,files:docs.map(d=>d.name+' ('+d.kind+')')};setStatus('');renderReview();
+  }catch(e){setStatus(e&&e.user?esc(e.user):(e&&e.message==='net'?'No se pudo cargar el lector de documentos. Revisa la conexión e inténtalo de nuevo.':'No se pudo leer el archivo. Puede estar dañado o protegido con contraseña.'),'err')}
+}
+function plan(){
+  const D=S.data,yms=Object.keys(PEND.meses).sort(),cur=D.meses.map(lblToYm),last=yms[yms.length-1];
+  const shift=$('rv-shift')?$('rv-shift').checked:last>cur[cur.length-1];
+  const end=shift&&last>cur[cur.length-1]?last:cur[cur.length-1];
+  const win=Array.from({length:36},(_,i)=>ymAdd(end,i-35));
+  return{yms,win,cur,end,shifted:end!==cur[cur.length-1],inWin:yms.filter(y=>win.includes(y)),out:yms.filter(y=>!win.includes(y))};
+}
+function renderReview(){
+  const D=S.data,P=plan(),cols6=P.inWin.slice(-6);
+  const cnt=P.inWin.reduce((s,y)=>s+Object.keys(PEND.meses[y]).length,0);
+  const miss=D.filas.filter(f=>!P.inWin.some(y=>PEND.meses[y][f.id]!==undefined)).map(f=>f.nombre);
+  const bal=cols6.map(y=>{const m=PEND.meses[y],k=['efectivo','cartera','inventarios','anticipos','otac','anc','prov','deuda_cp','deuda_lp','otpc','otpnc','patrimonio'];if(!k.every(x=>m[x]!==undefined))return null;
+    const d=m.efectivo+m.cartera+m.inventarios+m.anticipos+m.otac+m.anc-m.prov-m.deuda_cp-m.deuda_lp-m.otpc-m.otpnc-m.patrimonio;return Math.abs(d)>1?ymPretty(y)+' ('+nf(d,1)+')':null}).filter(Boolean);
+  const curLast=P.cur[P.cur.length-1];
+  $('review').hidden=false;
+  $('review').innerHTML=`<div class="sec-h"><h2>Revisa lo extraído antes de aplicarlo</h2><span class="chip ${PEND.method.startsWith('Extraído')?'verde':'ambar'}"><i></i>${esc(PEND.method)}</span></div>
+   <div class="meta"><span>Archivos: <b>${PEND.files.map(esc).join(', ')}</b></span>${PEND.empresa?`<span>Empresa: <b>${esc(PEND.empresa)}</b></span>`:''}${PEND.unidad_origen?`<span>Unidad original: <b>${esc(PEND.unidad_origen)}</b> → millones</span>`:''}
+   <span>Meses encontrados: <b>${P.yms.length}</b> (${ymPretty(P.yms[0])} a ${ymPretty(P.yms[P.yms.length-1])})</span><span>Celdas a llenar: <b class="num">${cnt}</b></span></div>
+   ${PEND.warn?`<div class="imp-status" style="margin:0">${esc(PEND.warn)}</div>`:''}
+   <div class="opts">
+     ${P.yms[P.yms.length-1]>curLast?`<label for="rv-shift"><input type="checkbox" id="rv-shift" ${P.shifted?'checked':''}> Mover la ventana de 36 meses para que termine en ${ymPretty(P.yms[P.yms.length-1])} (hoy termina en ${ymPretty(curLast)})</label>`:''}
+     ${PEND.empresa?`<label for="rv-emp"><input type="checkbox" id="rv-emp" checked> Usar «${esc(PEND.empresa)}» como nombre de la empresa</label>`:''}
+     ${!PEND.method.startsWith('Extraído')?`<label for="rv-unit">Las cifras del archivo están en <select id="rv-unit"><option value="1">millones</option><option value="1000">miles</option><option value="1000000">pesos</option></select></label>`:''}
+   </div>
+   <div class="scroll" style="max-height:340px"><table class="rv"><tr><th>Concepto (millones)</th>${cols6.map(y=>`<th>${ymPretty(y)}</th>`).join('')}<th>Meses con dato</th></tr>
+   ${D.filas.map(f=>{const n=P.inWin.filter(y=>PEND.meses[y][f.id]!==undefined).length;return `<tr><td>${f.nombre}</td>${cols6.map(y=>{const v=PEND.meses[y][f.id];return v===undefined?'<td class="miss">—</td>':`<td class="chg">${nf(v/unitDiv(),1)}</td>`}).join('')}<td>${n}</td></tr>`}).join('')}</table></div>
+   <ul>${miss.length?`<li>Sin dato en el documento (se conserva lo que ya hay en la base): ${miss.map(esc).join(', ')}.</li>`:''}
+   ${bal.length?`<li style="color:var(--bad)">El balance no cuadra (activo − pasivo − patrimonio) en: ${bal.join(', ')}. Revisa las cifras antes de aplicar.</li>`:''}
+   ${P.out.length?`<li>${P.out.length} mes(es) quedan fuera de la ventana de 36 meses y no se cargarán.</li>`:''}
+   ${P.shifted?`<li>Al mover la ventana, los conceptos que no vienen en el documento repiten en los meses nuevos el valor del último mes disponible; revísalos en la tabla 1. El presupuesto (tabla 2) se mantiene en el mismo orden de los últimos 12 meses.</li>`:''}
+   ${PEND.notas.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>
+   <div class="actions"><button class="btn btn-pri" id="rv-apply">Aplicar a la base</button><button class="btn" id="rv-cancel">Descartar</button></div>`;
+  if($('rv-shift'))$('rv-shift').onchange=renderReview;
+  if($('rv-unit'))$('rv-unit').onchange=renderReview;
+  $('rv-apply').onclick=applyImport;$('rv-cancel').onclick=()=>{PEND=null;$('review').hidden=true};
+}
+let _unit=1;const unitDiv=()=>{const u=$('rv-unit');if(u)_unit=+u.value;return _unit};
+function applyImport(){
+  const D=S.data,P=plan(),div=unitDiv();let n=0;
+  if(P.shifted){const old={};P.cur.forEach((y,i)=>old[y]=i);
+    D.filas.forEach(f=>{const src=D.F[f.id];let lastV=src[src.length-1];D.F[f.id]=P.win.map(y=>{if(old[y]!==undefined){lastV=src[old[y]];return lastV}return lastV})});D.meses=P.win.map(ymToLbl)}
+  const idx={};D.meses.forEach((l,i)=>idx[lblToYm(l)]=i);
+  P.inWin.forEach(y=>Object.entries(PEND.meses[y]).forEach(([id,v])=>{if(idx[y]!==undefined&&D.F[id]){D.F[id][idx[y]]=Math.round(v/div*100)/100;n++}}));
+  if(PEND.empresa&&$('rv-emp')&&$('rv-emp').checked)D.empresa=PEND.empresa;
+  if(P.shifted)S.mes=11;
+  PEND=null;$('review').hidden=true;changed();renderBase();
+  setStatus(`Listo: se llenaron ${nf(n,0)} celdas en ${P.inWin.length} meses. Revisa la tabla 1 y el cuadre del balance; el tablero ya usa los datos nuevos.`,'ok');
+}
+$('bDoc').onclick=()=>$('docIn').click();
+$('bDocTop').onclick=()=>$('docIn').click();
+$('docIn').onchange=e=>{const f=[...e.target.files];e.target.value='';importFiles(f)};
+const dz=$('drop');
+['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('over')}));
+['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('over')}));
+dz.addEventListener('drop',e=>importFiles([...e.dataTransfer.files]));
+(async()=>{try{if(window.claude&&claude.use){SAMPLE=await claude.use('sample');DL=await claude.use('downloads')}}catch(e){}})();
 recompute();render();
 </script>
 
