@@ -44,4 +44,4 @@ Marco de análisis: presentación de Análisis Financiero (MBA, Gerencia Financi
 
 ## Cargar varios PDF
 
-En **Importar PDF → Cargar varios PDF a la base anual** se suben uno o varios PDF (cada uno con su año y el comparativo anterior). El sistema arma la base anual con los años encontrados (mínimo 3 consecutivos); lo que falta se calcula, y el flujo operativo y el CAPEX se estiman porque no vienen en balance ni resultados.
+En **Importar PDF → Cargar varios PDF a la base anual** se suben uno o varios PDF (cada uno con su año y el comparativo anterior). El sistema arma la base anual con los años encontrados (mínimo 3 consecutivos); lo que falta se calcula, y el flujo operativo y el CAPEX se estiman porque no vienen en balance ni resultados. El nombre de la empresa se detecta del PDF y se muestra en el encabezado; si los PDF son de empresas distintas, avisa y no carga.
