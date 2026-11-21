@@ -1,4 +1,4 @@
-# Dashboard Estados Financieros - Cierre mensual
+# Dashboard Estados Financieros
 
 Tablero de una página que calcula 10 indicadores financieros a partir de una base editable y muestra, para cada uno, el resultado real, el presupuesto, la comparación con el año anterior, la tendencia de 12 meses y un semáforo. Identifica automáticamente las tres desviaciones que ameritan una decisión.
 
@@ -6,33 +6,14 @@ Tablero de una página que calcula 10 indicadores financieros a partir de una ba
 
 ## Cómo se usa
 1. Abrir `index.html` (o el enlace de la demo).
-2. Pestaña **Base editable**: reemplazar los datos de ejemplo por los estados financieros mensuales (36 meses), el presupuesto y, si se desea, los umbrales del semáforo.
-3. Pestaña **Tablero**: elegir el mes y leer el semáforo, las tres decisiones y las señales a investigar.
-4. **Exportar JSON** guarda la base; **Importar JSON** la recupera.
-
-## Mensual o anual
-El selector **Mensual | Anual** del encabezado define la periodicidad de la base. Cada modo guarda su propia base:
-- **Mensual:** 36 meses; los flujos se suman en los últimos 12 meses y la comparación es contra el mismo mes del año anterior.
-- **Anual:** de 2 a 15 años (botones para agregar o quitar años); los flujos son el total del año, los saldos son al cierre y la comparación es contra el año anterior.
-
-La importación de documentos, el PDF y los textos se ajustan al modo elegido.
-
-## Resumen imprimible en PDF
-Botón **Descargar PDF**: genera un resumen del mes elegido en A4 horizontal (2 páginas). La primera trae el índice de salud y la tabla de los 10 indicadores con semáforo, presupuesto, año anterior y tendencia de 12 meses; la segunda, las tres decisiones, las señales a investigar y los supuestos del cálculo.
-
-## Importar estados financieros (PDF, Word, Excel)
-Botón **Importar documento** (o arrastrar archivos a la Base editable). Formatos: `.pdf`, `.docx`, `.xlsx`, `.xls`, `.csv`.
-
-- **En claude.ai:** Claude lee el documento (incluidos PDF escaneados) y extrae las cifras mensuales de los 23 conceptos de la base, en millones de pesos, separando el valor del mes cuando el documento trae acumulados.
-- **Fuera de claude.ai (GitHub Pages):** se leen tablas con los meses en columnas y conceptos con nombres estándar; se indica si las cifras están en pesos, miles o millones.
-
-Antes de aplicar se muestra una revisión con lo extraído, los conceptos sin dato y el cuadre del balance. Si el documento trae meses posteriores, se puede mover la ventana de 36 meses.
+2. Elegir **Periodicidad** (Mensual o Anual) en el encabezado. Cada modo guarda su propia base.
+3. Pestaña **Base editable**: reemplazar los datos de ejemplo por los estados financieros (mensual: 36 meses; anual: mínimo 3 años, ideal 6), el presupuesto y, si se desea, los umbrales del semáforo.
+4. Pestaña **Tablero**: elegir el mes y leer el semáforo, las tres decisiones y las señales a investigar.
+5. **Exportar JSON** guarda la base; **Importar JSON** la recupera.
 
 Los datos se guardan solo en el navegador de quien edita. Los datos incluidos son ilustrativos.
 
 ## Indicadores
-Pasar el cursor por el nombre de un indicador (o tocar la «i» en pantallas táctiles) muestra qué mide, cómo se calcula y cómo leerlo.
-
 | Indicador | Fórmula (últimos 12 meses) |
 |---|---|
 | Margen EBITDA | (EBIT + D&A) / ingresos |
@@ -55,3 +36,8 @@ Se priorizan los indicadores que la gerencia puede mover (palancas) por gravedad
 
 ## Fuentes y límites
 Marco de análisis: presentación de Análisis Financiero (MBA, Gerencia Financiera); Ochoa et al. (2009), «El indicador Z», *Contaduría Universidad de Antioquia*, 54; material sobre EVA y flujo de caja. Los saldos de balance se toman a fin de mes, no como promedio. Los indicadores son una guía para investigar, no un dictamen de solvencia.
+
+## Mensual o anual
+
+- **Mensual:** ratios sobre los últimos 12 meses, comparados con el mismo mes del año anterior; tendencia de 12 meses.
+- **Anual:** ratios con los resultados del año y los saldos al cierre, comparados con el año anterior; tendencia de 4 años.
