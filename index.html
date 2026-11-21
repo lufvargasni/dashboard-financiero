@@ -100,6 +100,18 @@ h3{font-size:13px;margin:12px 0 6px}
     <div id="i_chk"></div>
     <div id="i_res"></div>
   </div>
+  <div class="sec" id="multi" style="margin-top:12px">
+    <h2>Cargar varios PDF a la base anual</h2>
+    <div class="note" style="margin:0 0 8px">Sube un PDF por año (o varios a la vez). Cada PDF aporta su año y el comparativo anterior; el sistema arma la base anual con los años que encuentre. Se necesitan mínimo 3 años consecutivos. Lo que el PDF no trae se calcula; el flujo operativo y el CAPEX se estiman (no vienen en balance ni resultados).</div>
+    <div class="ctrl" style="margin-bottom:8px">
+      <input type="file" id="m_file" accept=".pdf,application/pdf" multiple>
+      <label>Cifras en <select id="m_uni"><option value="1" selected>pesos</option><option value="1000">miles</option><option value="1000000">millones</option></select></label>
+      <button id="m_clear">Limpiar</button>
+    </div>
+    <div id="m_msg" class="note"></div>
+    <div class="scroll" style="max-height:none"><table id="m_tab"></table></div>
+    <div id="m_res"></div>
+  </div>
 </div>
 <div id="base">
   <div class="sec">
@@ -128,9 +140,9 @@ const DEFAULT_A={"empresa":"Empresa ejemplo (datos ilustrativos)","meses":["2021
 const KEY='dash-salud-fin-v2';
 let S={data:JSON.parse(JSON.stringify(DEFAULT)),dataA:JSON.parse(JSON.stringify(DEFAULT_A)),mes:11,mesA:3,per:'m'};
 const PM={m:{W:12,LAG:12,V:12,V0:24,min:11,minN:36},a:{W:1,LAG:1,V:4,V0:1,min:1,minN:3}};
-const P=()=>{const p=PM[S.per];return Object.assign({},p,{V0:DD().meses.length-p.V})};
+const P=()=>{const p=PM[S.per],n=DD().meses.length,V=S.per==='a'?Math.max(1,Math.min(p.V,n-2)):p.V;return Object.assign({},p,{V,V0:n-V})};
 const DD=()=>S.per==='a'?S.dataA:S.data;
-const SEL=()=>S.per==='a'?S.mesA:S.mes;
+const SEL=()=>Math.min(S.per==='a'?S.mesA:S.mes,P().V-1);
 try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o&&o.data&&o.data.kpis&&o.data.F){S=Object.assign(S,o);if(!S.dataA||!S.dataA.F)S.dataA=JSON.parse(JSON.stringify(DEFAULT_A));if(S.per!=='a')S.per='m'}}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const $=id=>document.getElementById(id);
@@ -188,7 +200,7 @@ function spark(k,t,st){
   const w=200,h=38,p=3,D=DD(),ser=[],mt=[],V=P().V;
   for(let j=0;j<V;j++){ser.push(VAL[P().V0+j][k.id]);mt.push(D.metas[k.id][j]);}
   const a=ser.concat(mt),mn=Math.min(...a),mx=Math.max(...a),rg=(mx-mn)||1;
-  const X=j=>p+j*(w-2*p)/(V-1),Y=v=>h-p-(v-mn)/rg*(h-2*p);
+  const X=j=>p+j*(w-2*p)/((V-1)||1),Y=v=>h-p-(v-mn)/rg*(h-2*p);
   const pl=s=>s.map((v,j)=>(j?'L':'M')+X(j).toFixed(1)+' '+Y(v).toFixed(1)).join('');
   const i=t-P().V0;
   return `<svg class="sp" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Tendencia ${S.per==='a'?V+' años':'12 meses'} de ${k.nombre}: línea sólida real, punteada meta o umbral">
@@ -246,7 +258,7 @@ function render(){
 function renderBase(){
   const D=DD(),an=S.per==='a';
   $('h_f').textContent=an?`1. Datos anuales (${D.meses.length} años; cada columna es un año: resultados del año y saldos al cierre)`:'1. Datos mensuales (36 meses; los ratios usan los últimos 12 meses)';
-  $('h_m').textContent=(an?'2. Presupuesto de los últimos 4 años por indicador':'2. Presupuesto de los últimos 12 meses por indicador')+' (en modo «meta» define el semáforo; en modo «umbral» es la comparación, y el semáforo usa los umbrales de la tabla 3)';
+  $('h_m').textContent=(an?`2. Presupuesto de los últimos ${P().V} años por indicador`:'2. Presupuesto de los últimos 12 meses por indicador')+' (en modo «meta» define el semáforo; en modo «umbral» es la comparación, y el semáforo usa los umbrales de la tabla 3)';
   $('c_tax').value=D.cfg.tax;$('c_wacc').value=D.cfg.wacc;$('c_t1').value=D.cfg.t1;$('c_t2').value=D.cfg.t2;
   let h=`<tr><th>Concepto (millones de pesos${an?', por año':''})</th>`+D.meses.map(m=>`<th>${m}</th>`).join('')+'</tr>',g='';
   D.filas.forEach((f,r)=>{
@@ -604,6 +616,83 @@ $('i_tab').addEventListener('change',e=>{const t=e.target;if(t.dataset.i){if(!S2
 $('i_csv').onclick=()=>{if(!S2._csv)return;try{const u=URL.createObjectURL(new Blob(['﻿'+S2._csv],{type:'text/csv'}));const a=document.createElement('a');a.href=u;a.download='estados-financieros-semaforo.csv';a.click();URL.revokeObjectURL(u)}catch(e){}};
 $('i_copy').onclick=async function(){if(!S2._csv)return;try{await navigator.clipboard.writeText(S2._csv);this.textContent='¡Copiado!';setTimeout(()=>this.textContent='Copiar CSV',1500)}catch(e){this.textContent='No se pudo copiar'}};
 renderImp();
+
+/* ===== Varios PDF -> base anual ===== */
+const M2={items:[]};
+const anioDe=l=>{if(!l)return null;const a=String(l).match(/(20\d{2})/);if(a)return +a[1];const b=String(l).match(/-(\d{2})$/);return b?2000+ +b[1]:null};
+async function lineasDeArchivo(file){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const doc=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  let l=[];for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p);const tc=await pg.getTextContent();l=l.concat(lineasDePagina(tc.items))}
+  return l;
+}
+async function leerMulti(files){
+  const msg=$('m_msg');
+  if(typeof pdfjsLib==='undefined'){msg.textContent='No se pudo cargar el lector de PDF (requiere conexión a internet).';return}
+  for(const f of files){
+    msg.textContent='Leyendo '+f.name+'…';
+    try{
+      const lin=await lineasDeArchivo(f);
+      if(lin.length<8){M2.items.push({file:f.name,campos:null,y:[null,null],n:0,err:'sin texto (¿escaneado?)'});continue}
+      const campos=extraerCampos(lin),ord=detectarOrden(lin);let y=[null,null];
+      if(ord){const a=anioDe(ord.labels[0]),b=anioDe(ord.labels[1]);if(ord.invertido){Object.values(campos).forEach(x=>{if(x)x.v=[x.v[1],x.v[0]]});y=[b,a]}else y=[a,b]}
+      M2.items.push({file:f.name,campos,y,n:Object.values(campos).filter(Boolean).length});
+    }catch(e){M2.items.push({file:f.name,campos:null,y:[null,null],n:0,err:'no se pudo leer'})}
+  }
+  msg.textContent='';renderMulti();
+}
+const valsM=(it,c)=>{const P={};CAMPOS.forEach(k=>{const x=it.campos&&it.campos[k[0]];P[k[0]]=x&&x.v[c]!=null?x.v[c]:null});return P};
+/* una fila de la base (millones de pesos) a partir de las cifras completas de un año */
+function filaBase(P,f){
+  const g=k=>P[k]==null?0:P[k]*f,a=k=>Math.abs(g(k));
+  const ac=P.ac!=null?P.ac*f:g('efectivo')+g('cartera')+g('inventarios')+g('anticipos');
+  const pc=P.pc!=null?P.pc*f:a('deuda_cp')+a('prov'), pnc=P.pnc!=null?P.pnc*f:a('deuda_lp');
+  const inter=P.intereses!=null?a('intereses'):a('fin_neto');
+  const otfin=(P.intereses!=null&&P.fin_neto!=null)?Math.max(0,a('fin_neto')-a('intereses')):0;
+  const base=g('efectivo')+g('cartera')+g('inventarios')+g('anticipos');
+  return{ventas:g('ventas'),costo:a('costo'),gop:a('gadm')+a('gventas'),otros:g('otros_ing')+g('otros_gas'),da:a('da'),intereses:inter,otfin,impuestos:a('impuesto'),
+   efectivo:g('efectivo'),cartera:g('cartera'),inventarios:g('inventarios'),anticipos:g('anticipos'),otac:Math.max(0,ac-base),
+   anc:P.anc!=null?P.anc*f:(P.at!=null?P.at*f-ac:0),prov:a('prov'),deuda_cp:a('deuda_cp'),deuda_lp:a('deuda_lp'),
+   otpc:Math.max(0,pc-a('prov')-a('deuda_cp')),otpnc:Math.max(0,pnc-a('deuda_lp')),ret:g('ret'),patrimonio:P.pat!=null?P.pat*f:0,
+   _un:P.util_neta!=null?P.util_neta*f:null};
+}
+function armarAnios(){
+  const f=(+$('m_uni').value)/1e6,por={},avisos=[];
+  M2.items.forEach((it,i)=>{if(!it.campos)return;[0,1].forEach(c=>{const y=it.y[c];if(!y)return;
+    const cand=por[y];if(!cand||c<cand.c||(c===cand.c&&i>cand.i))por[y]={i,c,it}})});
+  const ys=Object.keys(por).map(Number).sort((a,b)=>a-b);
+  const filas={};ys.forEach(y=>{const {it,c}=por[y],comp=completar(valsM(it,c));filas[y]={fila:filaBase(comp.P,f),w:validar(comp.P),arch:it.file,col:c}});
+  ys.forEach((y,j)=>{const r=filas[y].fila,p=filas[y-1]&&filas[y-1].fila;
+    const wc=x=>x.cartera+x.inventarios+x.anticipos-x.prov;
+    r.flujo_op=p?(r._un!=null?r._un:0)+r.da-(wc(r)-wc(p)):(r._un!=null?r._un:0)+r.da;
+    r.capex=p?Math.max(0,r.anc-p.anc+r.da):r.da;filas[y].est=!p});
+  return{ys,filas,consecutivos:ys.length>=3&&ys.every((y,i)=>!i||y===ys[i-1]+1)};
+}
+function renderMulti(){
+  let h='<tr><th>Archivo</th><th>Año (Columna 1)</th><th>Año (Columna 2)</th><th>Cuentas detectadas</th><th>Estado</th></tr>';
+  M2.items.forEach((it,i)=>{h+=`<tr><td style="text-align:left">${esc(it.file)}</td>`+[0,1].map(c=>`<td><input type="number" step="1" style="width:80px" data-my="${i}" data-c="${c}" value="${it.y[c]||''}"></td>`).join('')+
+   `<td>${it.n} de ${CAMPOS.length}</td><td style="text-align:left;color:${it.err||!it.y[0]?'#c0392b':'#1a7f4b'}">${it.err?esc(it.err):(it.y[0]?'Leído':'Falta el año: escríbelo')}</td></tr>`});
+  $('m_tab').innerHTML=M2.items.length?h:'';
+  if(!M2.items.length){$('m_res').innerHTML='';return}
+  const A=armarAnios();
+  let o=`<h3>Años encontrados: ${A.ys.length?A.ys.join(', '):'ninguno'}</h3>`;
+  if(A.ys.length){o+='<div class="scroll" style="max-height:none"><table><tr><th>Año</th><th>Tomado de</th><th>Ventas (MM)</th><th>EBITDA (MM)</th><th>Activos (MM)</th><th>Verificación</th></tr>'+
+    A.ys.map(y=>{const r=A.filas[y].fila,w=A.filas[y].w,eb=r.ventas-r.costo-r.gop+r.otros+r.da,at=r.efectivo+r.cartera+r.inventarios+r.anticipos+r.otac+r.anc;
+     return `<tr><td>${y}</td><td style="text-align:left">${esc(A.filas[y].arch)} (col. ${A.filas[y].col+1})</td><td>${nf(r.ventas,0)}</td><td>${nf(eb,0)}</td><td>${nf(at,0)}</td><td style="text-align:left;color:${w.length?'#a35f00':'#1a7f4b'}">${w.length?'⚠ '+esc(w[0]):'✓ cuadra'}${A.filas[y].est?' · flujo y CAPEX estimados sin año previo':''}</td></tr>`}).join('')+'</table></div>'}
+  const falta=A.ys.length&&!A.consecutivos;
+  o+=A.ys.length<3?'<div class="note">Faltan años: se necesitan mínimo 3 años consecutivos (cada PDF aporta 2 columnas).</div>':falta?'<div class="note" style="color:#c0392b">Los años no son consecutivos: falta algún PDF intermedio.</div>':'';
+  o+=`<div class="ctrl" style="margin-top:8px"><button id="m_apply" ${A.consecutivos?'':'disabled'}>Cargar a la base anual</button><span class="sub">Reemplaza los datos anuales actuales. El presupuesto y los umbrales se conservan.</span></div>`;
+  $('m_res').innerHTML=o;
+}
+$('m_file').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)leerMulti(fs)});
+$('m_uni').addEventListener('change',renderMulti);
+$('m_clear').onclick=()=>{M2.items=[];$('m_msg').textContent='';renderMulti()};
+$('m_tab').addEventListener('change',e=>{const t=e.target;if(t.dataset.my!==undefined){const v=parseInt(t.value,10);M2.items[+t.dataset.my].y[+t.dataset.c]=isNaN(v)?null:v;renderMulti()}});
+$('m_res').addEventListener('click',e=>{if(e.target.id!=='m_apply')return;
+  const A=armarAnios();if(!A.consecutivos)return;
+  const F={};Object.keys(S.dataA.F).forEach(k=>F[k]=A.ys.map(y=>{const v=A.filas[y].fila[k];return Math.round((v||0)*10)/10}));
+  S.dataA=Object.assign({},S.dataA,{meses:A.ys.map(String),F});S.per='a';S.mesA=99;save();recompute();render();renderBase();show('t')});
+renderMulti();
 
 </script>
 </body>
